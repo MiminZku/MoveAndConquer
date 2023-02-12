@@ -6,7 +6,6 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 // 변경 테스트
 // change test
-// revert test
 
 public enum BattleState
 {
