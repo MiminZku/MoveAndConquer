@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
+using UnityEngine.UI;
 
 
 public enum BattleState
@@ -38,8 +39,9 @@ public class GameManager : MonoBehaviourPunCallbacks
     int mainTurnNum = 6;
     int currentTurn = 1;
     // 선택 시간 변수
-    int maxTime = 30;
-    int currentTime = 0;
+    // int maxTime = 30;
+    // int currentTime = 0;
+
     // 주사위 수 저장 변수
     int diceNum;
     // 현재 게임 프로세스 상태
@@ -58,6 +60,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isBtnSelected;
     // Dice 객체 -> 일단 미사용
     //Dice dice;
+
+    // Time 체크 변수 
+    [HideInInspector] public float currentTime = 0;
+    float startTime = 0;
+    [HideInInspector] public float maxTime = 30f;
+    bool isTimeCheck = false;
+    [SerializeField] GameObject timeText;
 
     void Start()
     {
@@ -91,7 +100,32 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
+        if(isTimeCheck) CheckTime();
         GameProcess();
+    }
+
+    // 시간 체크
+    void CheckTime()
+    {
+        // 장애물과 이동 선택 UI 뜨는 순간부터 시간 재기 시작
+        currentTime = Time.time - startTime;
+
+        // 시간 줄이면서 줄인 값 UI에 업데이트
+        Text txt = timeText.GetComponent<Text>();
+        txt.text = "" + (maxTime - currentTime);
+
+        // 시간이 다 지나면 Time UI 비활성화
+        if (currentTime >= maxTime)
+        {
+            timeText.SetActive(false);
+            // network
+            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+            // 시간 체크 flag false로 설정
+            isTimeCheck = false;
+        }
+
+        // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
+     
     }
 
     private void GameProcess()
@@ -178,12 +212,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *Time UI 띄우기
     void ShowTimeUI()
     {
-
+        timeText.SetActive(true);
     }
     // *Time UI 숨기기
     void HideTimeUI()
     {
-
+        timeText.SetActive(false);
     }
 
 
@@ -245,10 +279,15 @@ public class GameManager : MonoBehaviourPunCallbacks
         ShowSelectUI();
 
         // *시간 제한 함수(시간 count)
-        StartCoroutine(TimeCount());
+        // StartCoroutine(TimeCount());
+        // 시간 재는 flag true 설정
+        isTimeCheck = true;
+        startTime = Time.time;
+        ShowTimeUI();
 
-        // 버튼이 선택되지 않거나 시간이 초과되지 않으면 대기
-        while (!isBtnSelected || (currentTime >= maxTime))
+        // 버튼이 선택되지 않으면 대기
+        // 하지만 버튼이 선택되지 않더라도 시간이 초과되면 빠져나오기 
+        while (!isBtnSelected && currentTime <= maxTime)
         {
             yield return null;
         }
