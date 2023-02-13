@@ -136,3 +136,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player1Mat: {fileID: 2100000, guid: 3060d33e27fb5964f8434fec1b3de78d, type: 2}
   player2Mat: {fileID: 2100000, guid: 07f0c894af2d55c4a9e13106c1752cb3, type: 2}
+  isInput: 0
+  isSetObstacle: 0

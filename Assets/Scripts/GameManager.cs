@@ -72,6 +72,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Start()
     {
+        obstacleButton.SetActive(false);
         // board 초기화
         board = new Tile[boardRow, boardCol];
         for (int i = 0; i < boardRow; i++)
@@ -153,6 +154,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *장애물 UI 표시
     private void ShowSelectUI()
     {
+        obstacleButton.SetActive(true);
         // 장애물, 이동 선택 UI 만들기
         // *장애물, 이동 선택 UI 표시 -> SetActive() 함수 이용
         // 장애물 버튼 선택시 OnClick Listener -> OnClickObstacleBtn()
@@ -233,6 +235,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         isObstacleSelected = true;
         isBtnSelected = true;
         obstacleButton.SetActive(false);
+        myPlayer.isInput = true;
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
     }
@@ -256,11 +259,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *주사위 눈 수 UI에 표시
         ChangeDiceUI();
 
-       /* // UI로 장애물 놓을건지 이동할건지 입력 받음
+        // UI로 장애물 놓을건지 이동할건지 입력 받음
         // *장애물, 이동 선택 UI 표시
         ShowSelectUI();
 
-        // *시간 제한 함수(시간 count)
+      /*  // *시간 제한 함수(시간 count)
         StartCoroutine(TimeCount());
 
         // 버튼이 선택되지 않거나 시간이 초과되지 않으면 대기
@@ -274,8 +277,10 @@ public class GameManager : MonoBehaviourPunCallbacks
             if (isObstacleSelected)
             {
                 // *이동 선택했을 경우, 플레이어에서 이동 입력 받음
-                myPlayer.InputObstacle();
-                Debug.Log("입력 완료");
+                if (myPlayer.isSetObstacle == true)
+                {
+                    Debug.Log("입력 완료");
+                }
             }
             else
             {
@@ -284,6 +289,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
            
         }
+        yield return new WaitForSeconds(10f);
 
  /*       // 네트워크에 모든 플레이어가 입력이 완료 됐는지 확인
         // if (EveryPlayerReady())
@@ -306,7 +312,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         for (int i = 0; i < boardRow; i++)
         {
-
             for (int j = 0; j < boardCol; j++)
             {
                 if (board[i, j].isObstacle == true) Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
@@ -340,6 +345,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 종료 조건 확인
         currentTurn++;
+
         if (currentTurn > mainTurnNum) state = BattleState.Finish;
         else state = BattleState.Input;
         isProcessing = false; 
@@ -349,7 +355,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **승패 확인
     IEnumerator Finish()
     {
-
+        
         // * board를 탐색해서 player1과 player2의 영역 찾기 
         // * 승패 UI 표시
         yield return null;
