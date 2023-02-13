@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
+using UnityEngine.UI; // **** 추가
 
 
 public enum BattleState
@@ -59,6 +60,16 @@ public class GameManager : MonoBehaviourPunCallbacks
     // Dice 객체 -> 일단 미사용
     //Dice dice;
 
+    // 장애물 객체 저장 **** 추가
+    [SerializeField] GameObject obstaclePrefab;
+
+    // 버튼 UI 객체  **** 추가
+    [SerializeField] GameObject obstacleButton;
+
+    // 버튼 UI 객체  **** 추가
+    [SerializeField] Text diceUi;
+
+
     void Start()
     {
         // board 초기화
@@ -107,9 +118,9 @@ public class GameManager : MonoBehaviourPunCallbacks
                 StartCoroutine(InputProcess());
                 break;
             case BattleState.SetObstacle:
-                // 게임매니저의 타일들을 탐색해서 장애물 플래그가 있는 타일에 장애물 실제로 설치
                 if (isProcessing) return;
                 else isProcessing = true;
+                // 게임매니저의 타일들을 탐색해서 장애물 플래그가 있는 타일에 장애물 실제로 설치
                 StartCoroutine(SetObstacle());
                 break;
             case BattleState.Move:
@@ -151,6 +162,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *주사위 UI 업데이트
     private void ChangeDiceUI()
     {
+        diceUi.text = diceNum.ToString();
         // dice 수를 표시하는 UI 만들기
         // *dice 수를 표시하는 UI를 받아와서 업데이트
         // NewGameMgr 의 변수 diceNum 이용
@@ -195,6 +207,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             diceNum = Random.Range(1, 7);
             // dice 애니메이션 필요
+            Debug.Log("주사위 굴러가요~");
+            Debug.Log(diceNum + "번");
         }
     }
 
@@ -217,6 +231,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void OnClickObstacleBtn()
     {
         isObstacleSelected = true;
+        isBtnSelected = true;
+        obstacleButton.SetActive(false);
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
     }
@@ -240,7 +256,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *주사위 눈 수 UI에 표시
         ChangeDiceUI();
 
-        // UI로 장애물 놓을건지 이동할건지 입력 받음
+       /* // UI로 장애물 놓을건지 이동할건지 입력 받음
         // *장애물, 이동 선택 UI 표시
         ShowSelectUI();
 
@@ -252,22 +268,24 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             yield return null;
         }
-        // 입력에 따라 이동, 장애물 설치 입력 함수 실행 
+        // 입력에 따라 이동, 장애물 설치 입력 함수 실행 */
         if (isBtnSelected)
         {
             if (isObstacleSelected)
             {
                 // *이동 선택했을 경우, 플레이어에서 이동 입력 받음
                 myPlayer.InputObstacle();
+                Debug.Log("입력 완료");
             }
             else
             {
                 // *장애물 설치 선택했을 경우, 플레이어에서 장애물 설치 입력 받음
                 myPlayer.InputMove(diceNum);
             }
+           
         }
 
-        // 네트워크에 모든 플레이어가 입력이 완료 됐는지 확인
+ /*       // 네트워크에 모든 플레이어가 입력이 완료 됐는지 확인
         // if (EveryPlayerReady())
         // {
         //     state = BattleState.SetObstacle;
@@ -277,7 +295,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         while (!EveryPlayerReady())
         {
             yield return null;
-        }
+        }*/
         state = BattleState.SetObstacle;
         isProcessing = false;
     }
@@ -285,7 +303,16 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
+        
+        for (int i = 0; i < boardRow; i++)
+        {
 
+            for (int j = 0; j < boardCol; j++)
+            {
+                if (board[i, j].isObstacle == true) Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
+            }
+        }
+        Debug.Log("설치 완료");
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
@@ -315,7 +342,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         currentTurn++;
         if (currentTurn > mainTurnNum) state = BattleState.Finish;
         else state = BattleState.Input;
-        isProcessing = false;
+        isProcessing = false; 
         yield return null;
     }
 
