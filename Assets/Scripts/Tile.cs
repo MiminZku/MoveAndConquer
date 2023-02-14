@@ -27,6 +27,7 @@ public class Tile : MonoBehaviour
 
     //
     public Index tileIndex;
+    internal bool isCrash;
 
     // Start is called before the first frame update 
     void Start()
@@ -42,8 +43,8 @@ public class Tile : MonoBehaviour
 
     public void changeColor(int mode)
     {
-        // Ãæµ¹ ÀÏ¾î³ª´Â tile ÀÌ¸é »öÄ¥ ÆĞ½º
-        // if(isCrash) { return; }
+        // ì¶©ëŒ ì¼ì–´ë‚˜ëŠ” tile ì´ë©´ ìƒ‰ì¹  íŒ¨ìŠ¤
+         if(isCrash) { return; }
 
         switch (mode)
         {

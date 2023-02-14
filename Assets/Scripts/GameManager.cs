@@ -370,25 +370,35 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 모든 player move buffer를 바탕으로 move 
 
         Player[] players = FindObjectsOfType<Player>();
-        Index moveIndex;
-        //모든 플레이어 반복
-        for(int i = 0; i < players.Length; i++)
+        int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
+                        players[0].pathBuffer.Count : players[1].pathBuffer.Count;
+        for (int j = 0; j < bigger; j++)
         {
-            for(int j = 0; j < players[i].pathBuffer.Count; j++)
+            Index moveIndex1, moveIndex2;
+            if (players[0].pathBuffer.Count != 0 && players[1].pathBuffer.Count != 0)
             {
-                // buffer가 비어있으면 pass
-                if(players[i].pathBuffer.Count == 0) break;
-
-                moveIndex = players[i].pathBuffer[j];
-                // 이동할 index의 타일이 장애물 타일이면 패스
-                if(board[moveIndex.row, moveIndex.col].isObstacle) break;
-
+                moveIndex1 = players[0].pathBuffer[j];
+                moveIndex2 = players[1].pathBuffer[j];
                 // 충돌 타일은 기존 색 그대로 
-                // setCrashTile(moveIndex1, moveIndex2);
+                SetCrashTile(moveIndex1, moveIndex2);
+            }
+            foreach (Player p in players)
+            {
+                Index moveIndex;
+                // buffer가 비어있으면 pass
+                if (p.pathBuffer.Count == 0)    continue;
+               
+                moveIndex = p.pathBuffer[j];
+                // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
+                if (board[moveIndex.row, moveIndex.col].isObstacle)
+                {
+                    p.pathBuffer.Clear();
+                    continue;
+                }
                 // 이동하면서 타일 색칠
-                players[i].Move(moveIndex);
+                p.Move(moveIndex);
                 // 자기 타일 색은 우선권 갖기
-                if (players[i].photonView.IsMine)
+                if (p.photonView.IsMine)
                 {
                     board[moveIndex.row, moveIndex.col].changeColor(1);
                 }
@@ -396,12 +406,23 @@ public class GameManager : MonoBehaviourPunCallbacks
                 {
                     board[moveIndex.row, moveIndex.col].changeColor(2);
                 }
-                
-                yield return new WaitForSeconds(1f);
             }
-            // 전부 이동하면 buffer 초기화
-            players[i].pathBuffer.Clear();
+            yield return new WaitForSeconds(1f);
+            // 충돌타일 설정 초기화
+            for (int r = 0; r < boardRow; r++)
+            {
+                for (int c = 0; c < boardCol; c++)
+                {
+                    board[r, c].isCrash = false;
+                }
+            }
         }
+        // 전부 이동하면 buffer 초기화
+        foreach(Player p in players)
+        {
+            p.pathBuffer.Clear();
+        }
+
 
         // 종료 조건 확인
         if (++currentTurn > mainTurnNum)
@@ -413,6 +434,28 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         isProcessing = false;
         yield return null;
+    }
+
+    private void SetCrashTile(Index moveIndex1, Index moveIndex2)
+    {
+        Index[] tileIndex1 = {moveIndex1,
+            new Index(moveIndex1.row-1, moveIndex1.col),
+            new Index(moveIndex1.row+1, moveIndex1.col),
+            new Index(moveIndex1.row, moveIndex1.col-1),
+            new Index(moveIndex1.row, moveIndex1.col+1)};
+        Index[] tileIndex2 = {moveIndex2,
+            new Index(moveIndex2.row-1, moveIndex2.col),
+            new Index(moveIndex2.row+1, moveIndex2.col),
+            new Index(moveIndex2.row, moveIndex2.col-1),
+            new Index(moveIndex2.row, moveIndex2.col+1)};
+
+        foreach(Index i in tileIndex1)
+        {
+            foreach(Index j in tileIndex2)
+            {
+                if (i.Equals(j)) board[i.row, i.col].isCrash = true;
+            }
+        }
     }
 
     // **승패 확인

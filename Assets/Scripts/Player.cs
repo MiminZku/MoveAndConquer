@@ -26,11 +26,11 @@ public class Player : MonoBehaviourPun
     public Material player2Mat;
 
     Tile target;
-    public bool isObstacleInput; // ÀÔ·Â °¡´É flag
+    public bool isObstacleInput; // ì…ë ¥ ê°€ëŠ¥ flag
     private bool isMoveInput;
     private int moveCount;
     
-    // Ä¥ÇÏ±â À§ÇÑ flags
+    // ì¹ í•˜ê¸° ìœ„í•œ flags
     bool isMoveRight = true;
     bool isMoveLeft = true;
     bool isMoveUp = true;
@@ -74,7 +74,7 @@ public class Player : MonoBehaviourPun
     void Update()
     {
         if (!photonView.IsMine) return;
-        if (isObstacleInput == true && Input.GetMouseButtonDown(0)) // *** °´Ã¼ hit ÇÔ¼ö Ãß°¡
+        if (isObstacleInput == true && Input.GetMouseButtonDown(0)) // *** ê°ì²´ hit í•¨ìˆ˜ ì¶”ê°€
         {
             int layerMask = -1 - (1 << LayerMask.NameToLayer("Player"));
             RaycastHit hit;
@@ -85,8 +85,8 @@ public class Player : MonoBehaviourPun
             }
             if (IsPlayerOnTile(target))
             {
-                // ÇÃ·¹ÀÌ¾î°¡ Á¸ÀçÇÏ´Â Å¸ÀÏÀº Å¬¸¯ ¾ÈµÇ°Ô
-                // Á¶°Ç¿¡ ÀÖ´Â ÇÔ¼ö ¹Ì¿Ï¼º »óÅÂ
+                // í”Œë ˆì´ì–´ê°€ ì¡´ì¬í•˜ëŠ” íƒ€ì¼ì€ í´ë¦­ ì•ˆë˜ê²Œ
+                // ì¡°ê±´ì— ìˆëŠ” í•¨ìˆ˜ ë¯¸ì™„ì„± ìƒíƒœ
             }
             else
             {
@@ -161,9 +161,9 @@ public class Player : MonoBehaviourPun
 
                 }
             }
-            else    // diceNum ¸¸Å­ ÀÔ·ÂÀ» ´Ù ¹Ş¾ÒÀ» °æ¿ì
+            else    // diceNum ë§Œí¼ ì…ë ¥ì„ ë‹¤ ë°›ì•˜ì„ ê²½ìš°
             {
-                if (Input.GetKeyDown(KeyCode.Return))   // ÀÔ·Â ¿Ï·á
+                if (Input.GetKeyDown(KeyCode.Return))   // ì…ë ¥ ì™„ë£Œ
                 {
                     currentIndex = orgIndex;
                     transform.position = orgPosition;
@@ -180,25 +180,25 @@ public class Player : MonoBehaviourPun
         return false;
     }
 
-    // *Å¬¸¯À¸·Î ÀÔ·Â¹Ş°í Å¬¸¯ÇÑ Å¬¸¯ÇÑ Å¸ÀÏÀÇ isObstacle flag¸¦ º¯°æÇØÁÜ
+    // *í´ë¦­ìœ¼ë¡œ ì…ë ¥ë°›ê³  í´ë¦­í•œ í´ë¦­í•œ íƒ€ì¼ì˜ isObstacle flagë¥¼ ë³€ê²½í•´ì¤Œ
     public void InputObstacle()
     {
         isObstacleInput = true;
-        // flag ¸¦ ÀÌ ÇÔ¼ö¿¡¼­ ¹Ù²ãÁÖ°í Update() ¿¡¼­ ÀÔ·ÂÀ» ¹Ş±â
-        // flag´Â ÀÔ·ÂÀ» ¹ŞÀ» ¼ö ÀÕ´Â »óÅÂ¸¦ ³ªÅ¸³¿
-        // ¾Æ·¡ ÄÚµå°¡ ²À ÀÌ ÇÔ¼ö ¾È¿¡ ÀÖ¾î¾ßÇÏ´Â °Å´Â ¾Æ´Ô. update() ¹®¿¡¼­µµ »ç¿ë °¡´É.
+        // flag ë¥¼ ì´ í•¨ìˆ˜ì—ì„œ ë°”ê¿”ì£¼ê³  Update() ì—ì„œ ì…ë ¥ì„ ë°›ê¸°
+        // flagëŠ” ì…ë ¥ì„ ë°›ì„ ìˆ˜ ì‡ëŠ” ìƒíƒœë¥¼ ë‚˜íƒ€ëƒ„
+        // ì•„ë˜ ì½”ë“œê°€ ê¼­ ì´ í•¨ìˆ˜ ì•ˆì— ìˆì–´ì•¼í•˜ëŠ” ê±°ëŠ” ì•„ë‹˜. update() ë¬¸ì—ì„œë„ ì‚¬ìš© ê°€ëŠ¥.
 
-        // *Å¬¸¯ÇÑ Å¸ÀÏÀÇ row¿Í colÀ» °¡Á®¿Í¼­ tileRow, tileCol º¯¼ö¿¡ ´ëÀÔ
-        // tile Å¬·¡½º¿¡ tileIndex ÀÌ¿ë
-        // *NewGameMgr¿¡¼­ timeÀÌ ÃÊ°úµÇ¸é ÀÔ·Â¹Ş±â ÁßÁö
-        // NewGameMgrÀÇ º¯¼ö currentTime, maxTime ÀÌ¿ë
+        // *í´ë¦­í•œ íƒ€ì¼ì˜ rowì™€ colì„ ê°€ì ¸ì™€ì„œ tileRow, tileCol ë³€ìˆ˜ì— ëŒ€ì…
+        // tile í´ë˜ìŠ¤ì— tileIndex ì´ìš©
+        // *NewGameMgrì—ì„œ timeì´ ì´ˆê³¼ë˜ë©´ ì…ë ¥ë°›ê¸° ì¤‘ì§€
+        // NewGameMgrì˜ ë³€ìˆ˜ currentTime, maxTime ì´ìš©
 
         // network 
-        // iaObastacle flag º¯°æÇØÁÖ´Â ÄÚµå
-        // ÇÊ¿ä¿¡ µû¶ó À§Ä¡ ÀÌµ¿
+        // iaObastacle flag ë³€ê²½í•´ì£¼ëŠ” ì½”ë“œ
+        // í•„ìš”ì— ë”°ë¼ ìœ„ì¹˜ ì´ë™
     }
 
-    // *ÀÌµ¿À» ÀÔ·Â¹Ş°í ÀÌµ¿ °æ·Î¸¦ NewPlayer Å¬·¡½º°¡ °¡Áö°í ÀÖ´Â pathBuffer º¯¼ö¿¡ ÀúÀå.
+    // *ì´ë™ì„ ì…ë ¥ë°›ê³  ì´ë™ ê²½ë¡œë¥¼ NewPlayer í´ë˜ìŠ¤ê°€ ê°€ì§€ê³  ìˆëŠ” pathBuffer ë³€ìˆ˜ì— ì €ì¥.
     public void InputMove(int diceNum)
     {
         isMoveInput = true;
@@ -206,23 +206,23 @@ public class Player : MonoBehaviourPun
         pathBuffer.Clear();
         orgIndex = currentIndex;
         orgPosition = transform.position;
-        // flag ¸¦ ÀÌ ÇÔ¼ö¿¡¼­ ¹Ù²ãÁÖ°í Update() ¿¡¼­ ÀÔ·ÂÀ» ¹Ş±â
-        // flag´Â ÀÔ·ÂÀ» ¹ŞÀ» ¼ö ÀÕ´Â »óÅÂ¸¦ ³ªÅ¸³¿
-        // ÀÌµ¿ ÀÔ·Â¹Ş±â´Â InputObstacle() ÇÔ¼ö¿Í ¸¶Âù°¡Áö·Î Update() ¹®¿¡¼­ ¹Ş±â
-        // ¸¶Âù°¡Áö·Î flag ÇÊ¿ä
-        // ÀÔ·Â¹ŞÀ¸¸é¼­ player ¿ÀºêÁ§Æ®(Ã¼½º ¸») ÀÌµ¿ ÇÊ¿ä
-        // ¸Å°³º¯¼ö·Î ¹ŞÀº diceNum ¸¸Å­ ÀÔ·Â ¹Ş±â
-        // ¸ğµç °ªÀ» ´Ù ÀÔ·Â¹ŞÀ¸¸é ¿ø·¡ À§Ä¡·Î ÀÌµ¿.
+        // flag ë¥¼ ì´ í•¨ìˆ˜ì—ì„œ ë°”ê¿”ì£¼ê³  Update() ì—ì„œ ì…ë ¥ì„ ë°›ê¸°
+        // flagëŠ” ì…ë ¥ì„ ë°›ì„ ìˆ˜ ì‡ëŠ” ìƒíƒœë¥¼ ë‚˜íƒ€ëƒ„
+        // ì´ë™ ì…ë ¥ë°›ê¸°ëŠ” InputObstacle() í•¨ìˆ˜ì™€ ë§ˆì°¬ê°€ì§€ë¡œ Update() ë¬¸ì—ì„œ ë°›ê¸°
+        // ë§ˆì°¬ê°€ì§€ë¡œ flag í•„ìš”
+        // ì…ë ¥ë°›ìœ¼ë©´ì„œ player ì˜¤ë¸Œì íŠ¸(ì²´ìŠ¤ ë§) ì´ë™ í•„ìš”
+        // ë§¤ê°œë³€ìˆ˜ë¡œ ë°›ì€ diceNum ë§Œí¼ ì…ë ¥ ë°›ê¸°
+        // ëª¨ë“  ê°’ì„ ë‹¤ ì…ë ¥ë°›ìœ¼ë©´ ì›ë˜ ìœ„ì¹˜ë¡œ ì´ë™.
 
-        // *NewGameMgr¿¡¼­ timeÀÌ ÃÊ°úµÇ¸é ÀÔ·Â¹Ş±â ÁßÁö
-        // NewGameMgrÀÇ º¯¼ö currentTime, maxTime ÀÌ¿ë
+        // *NewGameMgrì—ì„œ timeì´ ì´ˆê³¼ë˜ë©´ ì…ë ¥ë°›ê¸° ì¤‘ì§€
+        // NewGameMgrì˜ ë³€ìˆ˜ currentTime, maxTime ì´ìš©
     }
 
-    // RPC ÇÔ¼ö
+    // RPC í•¨ìˆ˜
     [PunRPC]
     void SetObstacleFlag(int indexRow, int indexCol)
     {
-        //flag »õ¿ì±â
+        //flag ìƒˆìš°ê¸°
         board[indexRow, indexCol].isObstacle = true;
     }
     [PunRPC]
@@ -244,26 +244,26 @@ public class Player : MonoBehaviourPun
         GameManager.Instance.diceNum = diceNum;
     }
 
-    // ÇöÀç À§Ä¡¿¡¼­ ÀÌµ¿ÇÒ ¼ö ÀÖ´Â À§Ä¡µé flag ¼¼ÆÃ
-    public void setPathFlag()
+    // í˜„ì¬ ìœ„ì¹˜ì—ì„œ ì´ë™í•  ìˆ˜ ìˆëŠ” ìœ„ì¹˜ë“¤ flag ì„¸íŒ…
+    public void SetPathFlag()
     {
         int maxRow = GameManager.Instance.boardRow - 1;
         int maxCol = GameManager.Instance.boardCol - 1;
 
         
-        if(currentIndex.row == 0) { isMoveUp = false; } // À§·Î ÀÌµ¿ ºÒ°¡
+        if(currentIndex.row == 0) { isMoveUp = false; } // ìœ„ë¡œ ì´ë™ ë¶ˆê°€
         else { isMoveUp = true; }
 
-        if(currentIndex.row == maxRow) { isMoveDown = false; } // ¾Æ·¡·Î ÀÌµ¿ ºÒ°¡
+        if(currentIndex.row == maxRow) { isMoveDown = false; } // ì•„ë˜ë¡œ ì´ë™ ë¶ˆê°€
         else { isMoveDown = true; }
 
-        if(currentIndex.col == 0){ isMoveLeft = false; } // ¿ŞÂÊÀ¸·Î ÀÌµ¿ ºÒ°¡
+        if(currentIndex.col == 0){ isMoveLeft = false; } // ì™¼ìª½ìœ¼ë¡œ ì´ë™ ë¶ˆê°€
         else { isMoveLeft = true;}
 
-        if(currentIndex.col == maxCol){ isMoveRight = false;} // ¿À¸¥ÂÊÀ¸·Î ÀÌµ¿ ºÒ°¡
+        if(currentIndex.col == maxCol){ isMoveRight = false;} // ì˜¤ë¥¸ìª½ìœ¼ë¡œ ì´ë™ ë¶ˆê°€
         else { isMoveRight = true; }
     }
-    // ÀÌµ¿ ÇÔ¼ö
+    // ì´ë™ í•¨ìˆ˜
     public void Move(Index moveIndex)
     {
 
@@ -274,14 +274,14 @@ public class Player : MonoBehaviourPun
         float moveZ = moveTile.transform.position.z;
         transform.position = new Vector3(moveX, transform.position.y, moveZ);
         orgIndex = currentIndex;
-        // ¿òÁ÷ÀÌ¸é¼­ Å¸ÀÏ µÚÁı±â 
-        // flag¸¦ ÅëÇØ¼­ tile µÚÁı±â tag¸¦ ÅëÇØ¼­ »ö±ò ÁöÁ¤
-        // tag·Î player ÁöÁ¤
+        // ì›€ì§ì´ë©´ì„œ íƒ€ì¼ ë’¤ì§‘ê¸° 
+        // flagë¥¼ í†µí•´ì„œ tile ë’¤ì§‘ê¸° tagë¥¼ í†µí•´ì„œ ìƒ‰ê¹” ì§€ì •
+        // tagë¡œ player ì§€ì •
         int mode;
-        if(photonView.IsMine) { mode = 1; } // Blue »ö 
-        else { mode = 2; } //Red »ö
+        if(photonView.IsMine) { mode = 1; } // Blue ìƒ‰ 
+        else { mode = 2; } //Red ìƒ‰
         // check flag
-        setPathFlag();
+        SetPathFlag();
         // change color
         board[currentIndex.row , currentIndex.col].changeColor(mode);
         if(isMoveUp) { board[currentIndex.row - 1 , currentIndex.col].changeColor(mode); }
