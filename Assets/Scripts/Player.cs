@@ -45,13 +45,13 @@ public class Player : MonoBehaviourPun
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("입력 중:" + isInput);
         if (Input.GetMouseButtonDown(0) && isInput == true) // *** 객체 hit 함수 추가
         {
+            int layerMask = -1 - (1 << LayerMask.NameToLayer("Player"));
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
             {
                 target = hit.collider.gameObject.GetComponent<Tile>();
             }
