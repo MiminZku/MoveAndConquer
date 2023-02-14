@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
-using UnityEngine.UI;
+using UnityEngine.UI; // **** Ãß°¡
 
 
 public enum BattleState
@@ -19,7 +19,7 @@ public enum BattleState
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
-    // ì‹±ê¸€í†¤
+    // ½Ì±ÛÅæ
     public static GameManager Instance
     {
         get
@@ -30,47 +30,44 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
     private static GameManager instance;
-    // board ë³€ìˆ˜
+    // board º¯¼ö
     [SerializeField] GameObject tiles;
     public Tile[,] board;
     const int boardRow = 9;
     const int boardCol = 5;
-    // Turn ì²´í¬ ë³€ìˆ˜
+    // Turn Ã¼Å© º¯¼ö
     int mainTurnNum = 6;
     int currentTurn = 1;
-    // ì„ íƒ ì‹œê°„ ë³€ìˆ˜
-    // int maxTime = 30;
-    // int currentTime = 0;
-
-    // ì£¼ì‚¬ìœ„ ìˆ˜ ì €ì¥ ë³€ìˆ˜
-    int diceNum;
-    // í˜„ì¬ ê²Œì„ í”„ë¡œì„¸ìŠ¤ ìƒíƒœ
+    // ¼±ÅÃ ½Ã°£ º¯¼ö
+    int maxTime = 30;
+    int currentTime = 0;
+    // ÁÖ»çÀ§ ¼ö ÀúÀå º¯¼ö
+    public int diceNum;
+    // ÇöÀç °ÔÀÓ ÇÁ·Î¼¼½º »óÅÂ
     BattleState state;
-    // Player ê°ì²´ë“¤ ì €ì¥.
+    // Player °´Ã¼µé ÀúÀå.
     GameObject myPlayerObject;
     Player myPlayer;
-    // player ìƒì„±
-    [SerializeField] Transform[] spawnPositions;
+    // player »ı¼º
+    public Transform[] spawnPositions;
     [SerializeField] GameObject playerPrefab;
     // processing flag
-    bool isProcessing = false;
-    // obstacle ì„ íƒ flag
+    bool isProgressing = false;
+    // obstacle ¼±ÅÃ flag
     bool isObstacleSelected;
-    // obstacle ë²„íŠ¼ì„ ì„ íƒí•˜ë“  move ë²„íŠ¼ì„ ì„ íƒí•˜ë“  ì„ íƒí•˜ë©´ true
+    // obstacle ¹öÆ°À» ¼±ÅÃÇÏµç move ¹öÆ°À» ¼±ÅÃÇÏµç ¼±ÅÃÇÏ¸é true
     bool isBtnSelected;
-    // Dice ê°ì²´ -> ì¼ë‹¨ ë¯¸ì‚¬ìš©
-    //Dice dice;
 
-    // Time ì²´í¬ ë³€ìˆ˜ 
-    [HideInInspector] public float currentTime = 0;
-    float startTime = 0;
-    [HideInInspector] public float maxTime = 30f;
-    bool isTimeCheck = false;
-    [SerializeField] GameObject timeText;
+    // Àå¾Ö¹° °´Ã¼ ÀúÀå **** Ãß°¡
+    [SerializeField] GameObject obstaclePrefab;
+    [SerializeField] GameObject inputObstacleButton;
+    [SerializeField] GameObject inputMoveButton;
+    [SerializeField] Text diceText;
+    [SerializeField] Text timeText;
 
     void Start()
     {
-        // board ì´ˆê¸°í™”
+        // board ÃÊ±âÈ­
         board = new Tile[boardRow, boardCol];
         for (int i = 0; i < boardRow; i++)
         {
@@ -84,9 +81,9 @@ public class GameManager : MonoBehaviourPunCallbacks
                 Debug.Log("tile index : " + i + ", " + j);
             }
         }
-        // player ìƒì„±
+        // player »ı¼º
         SpanwPlayer();
-        // ìƒíƒœ ì´ˆê¸°í™”
+        // »óÅÂ ÃÊ±âÈ­
         state = BattleState.Start;
     }
 
@@ -100,32 +97,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
-        if(isTimeCheck) CheckTime();
+        if (PhotonNetwork.PlayerList.Length < 2) return;
         GameProcess();
-    }
-
-    // ì‹œê°„ ì²´í¬
-    void CheckTime()
-    {
-        // ì¥ì• ë¬¼ê³¼ ì´ë™ ì„ íƒ UI ëœ¨ëŠ” ìˆœê°„ë¶€í„° ì‹œê°„ ì¬ê¸° ì‹œì‘
-        currentTime = Time.time - startTime;
-
-        // ì‹œê°„ ì¤„ì´ë©´ì„œ ì¤„ì¸ ê°’ UIì— ì—…ë°ì´íŠ¸
-        Text txt = timeText.GetComponent<Text>();
-        txt.text = "" + (int)(maxTime - currentTime);
-
-        // ì‹œê°„ì´ ë‹¤ ì§€ë‚˜ë©´ Time UI ë¹„í™œì„±í™”
-        if (currentTime >= maxTime)
-        {
-            timeText.SetActive(false);
-            // network
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
-            // ì‹œê°„ ì²´í¬ flag falseë¡œ ì„¤ì •
-            isTimeCheck = false;
-        }
-
-        // ShowTimeUI, HideTimeUI() êµ³ì´ í•„ìš” ì—†ì„ë“¯
-     
     }
 
     private void GameProcess()
@@ -136,234 +109,231 @@ public class GameManager : MonoBehaviourPunCallbacks
                 state = BattleState.Input;
                 break;
             case BattleState.Input:
-                if (isProcessing) return;
-                else isProcessing = true;
+                if (isProgressing) return;
+                else isProgressing = true;
                 StartCoroutine(InputProcess());
                 break;
             case BattleState.SetObstacle:
-                // ê²Œì„ë§¤ë‹ˆì €ì˜ íƒ€ì¼ë“¤ì„ íƒìƒ‰í•´ì„œ ì¥ì• ë¬¼ í”Œë˜ê·¸ê°€ ìˆëŠ” íƒ€ì¼ì— ì¥ì• ë¬¼ ì‹¤ì œë¡œ ì„¤ì¹˜
-                if (isProcessing) return;
-                else isProcessing = true;
+                // °ÔÀÓ¸Å´ÏÀúÀÇ Å¸ÀÏµéÀ» Å½»öÇØ¼­ Àå¾Ö¹° ÇÃ·¡±×°¡ ÀÖ´Â Å¸ÀÏ¿¡ Àå¾Ö¹° ½ÇÁ¦·Î ¼³Ä¡
+                if (isProgressing) return;
+                else isProgressing = true;
                 StartCoroutine(SetObstacle());
                 break;
             case BattleState.Move:
-                // ì´ë™ ì…ë ¥ì— ë”°ë¼ì„œ í”Œë ˆì´ì–´ì—ì„œ ì´ë™
-                // ë§ˆì§€ë§‰ í„´ì´ë©´ ìƒíƒœ Finishë¡œ ë³€ê²½
-                if (isProcessing) return;
-                else isProcessing = true;
+                // ÀÌµ¿ ÀÔ·Â¿¡ µû¶ó¼­ ÇÃ·¹ÀÌ¾î¿¡¼­ ÀÌµ¿
+                // ¸¶Áö¸· ÅÏÀÌ¸é »óÅÂ Finish·Î º¯°æ
+                if (isProgressing) return;
+                else isProgressing = true;
                 StartCoroutine(AllMove());
                 break;
             case BattleState.Finish:
-                // ìŠ¹íŒ¨ íŒì •
-                if (isProcessing) return;
-                else isProcessing = true;
+                // ½ÂÆĞ ÆÇÁ¤
+                if (isProgressing) return;
+                else isProgressing = true;
                 StartCoroutine(Finish());
                 break;
         }
     }
-    // ëª¨ë“  playerê°€ ì…ë ¥ì„ ë°›ì•˜ëŠ”ì§€ ì²´í¬
+    // ¸ğµç player°¡ ÀÔ·ÂÀ» ¹Ş¾Ò´ÂÁö Ã¼Å©
     private bool EveryPlayerReady()
     {
         foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
         {
             Hashtable cp = player.CustomProperties;
-            Debug.Log(cp["isMoveReady"]);
-            if (!(bool)cp["isMoveReady"]) return false;
+            Debug.Log(cp["isInputDone"]);
+            if (!(bool)cp["isInputDone"]) return false;
         }
         return true;
     }
 
-    // *ì¥ì• ë¬¼ UI í‘œì‹œ
+    // *Àå¾Ö¹° UI Ç¥½Ã
     private void ShowSelectUI()
     {
-        // ì¥ì• ë¬¼, ì´ë™ ì„ íƒ UI ë§Œë“¤ê¸°
-        // *ì¥ì• ë¬¼, ì´ë™ ì„ íƒ UI í‘œì‹œ -> SetActive() í•¨ìˆ˜ ì´ìš©
-        // ì¥ì• ë¬¼ ë²„íŠ¼ ì„ íƒì‹œ OnClick Listener -> OnClickObstacleBtn()
-        // ì´ë™ ë²„íŠ¼ ì„ íƒì‹œ OnClick Listener -> OnClickMoveBtn()
-
+        isBtnSelected = false;
+        inputObstacleButton.SetActive(true);
+        inputMoveButton.SetActive(true);
+        // Àå¾Ö¹°, ÀÌµ¿ ¼±ÅÃ UI ¸¸µé±â
+        // *Àå¾Ö¹°, ÀÌµ¿ ¼±ÅÃ UI Ç¥½Ã -> SetActive() ÇÔ¼ö ÀÌ¿ë
+        // Àå¾Ö¹° ¹öÆ° ¼±ÅÃ½Ã OnClick Listener -> OnClickObstacleBtn()
+        // ÀÌµ¿ ¹öÆ° ¼±ÅÃ½Ã OnClick Listener -> OnClickMoveBtn()
     }
-    // *ì£¼ì‚¬ìœ„ UI ì—…ë°ì´íŠ¸
+    // *ÁÖ»çÀ§ UI ¾÷µ¥ÀÌÆ®
     private void ChangeDiceUI()
     {
-        // dice ìˆ˜ë¥¼ í‘œì‹œí•˜ëŠ” UI ë§Œë“¤ê¸°
-        // *dice ìˆ˜ë¥¼ í‘œì‹œí•˜ëŠ” UIë¥¼ ë°›ì•„ì™€ì„œ ì—…ë°ì´íŠ¸
-        // NewGameMgr ì˜ ë³€ìˆ˜ diceNum ì´ìš©
+        diceText.text = "Dice : " + diceNum.ToString();
+        // dice ¼ö¸¦ Ç¥½ÃÇÏ´Â UI ¸¸µé±â
+        // *dice ¼ö¸¦ Ç¥½ÃÇÏ´Â UI¸¦ ¹Ş¾Æ¿Í¼­ ¾÷µ¥ÀÌÆ®
+        // NewGameMgr ÀÇ º¯¼ö diceNum ÀÌ¿ë
     }
-    // Time ì¤„ì–´ë“œëŠ” í•¨ìˆ˜
+    // Time ÁÙ¾îµå´Â ÇÔ¼ö
     IEnumerator TimeCount()
     {
-        // *Time UI ë„ìš°ê¸°
+        // *Time UI ¶ç¿ì±â
         ShowTimeUI();
-        // *ì‹œê°„ ì¤„ì´ë©´ì„œ ì¤„ì¸ ê°’ UIì— ì—…ë°ì´íŠ¸
-        // yield ì‚¬ìš©í•´ì„œ êµ¬í˜„
-        // currentTime, maxTime ë³€ìˆ˜ ì´ìš©
-        // ì‹œê°„ì´ ë‹¤ ì§€ë‚˜ë©´ Time UI ë¹„í™œì„±í™”
-        // battle state ë¥¼ setObstacleë¡œ ë³€ê²½
+        // *½Ã°£ ÁÙÀÌ¸é¼­ ÁÙÀÎ °ª UI¿¡ ¾÷µ¥ÀÌÆ®
+        // yield »ç¿ëÇØ¼­ ±¸Çö
+        // currentTime, maxTime º¯¼ö ÀÌ¿ë
+        // ½Ã°£ÀÌ ´Ù Áö³ª¸é Time UI ºñÈ°¼ºÈ­
+        // battle state ¸¦ setObstacle·Î º¯°æ
         if (currentTime >= maxTime)
         {
-
             // network
             PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
         }
 
-        // ì•„ë˜ ì½”ë“œëŠ” ì˜¤ë¥˜ ë°©ì§€ë¥¼ ìœ„í•œ ì½”ë“œ 
+        // ¾Æ·¡ ÄÚµå´Â ¿À·ù ¹æÁö¸¦ À§ÇÑ ÄÚµå 
         yield return null;
     }
-    // *Time UI ë„ìš°ê¸°
+    // *Time UI ¶ç¿ì±â
     void ShowTimeUI()
     {
-        timeText.SetActive(true);
+
     }
-    // *Time UI ìˆ¨ê¸°ê¸°
+    // *Time UI ¼û±â±â
     void HideTimeUI()
     {
-        timeText.SetActive(false);
+
     }
 
 
-    // dice í´ë˜ìŠ¤ ì‚¬ìš©ì•ˆí• ì‹œ
+    // dice Å¬·¡½º »ç¿ë¾ÈÇÒ½Ã
     void RollingDice()
     {
-        // ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ì—ì„œë§Œ í˜¸ì¶œ
+        // ¸¶½ºÅÍ Å¬¶óÀÌ¾ğÆ®¿¡¼­¸¸ È£Ãâ
         if (PhotonNetwork.IsMasterClient)
         {
             diceNum = Random.Range(1, 7);
-            // dice ì• ë‹ˆë©”ì´ì…˜ í•„ìš”
+            // dice ¾Ö´Ï¸ŞÀÌ¼Ç ÇÊ¿ä
         }
     }
 
-    // RPC í•¨ìˆ˜ë¥¼ ì—¬ê¸°ì—ì„œ ì •ì˜í•´ë„ ë˜ë‚˜
-    // ì•ˆëœë‹¤..
-    //[PunRPC]
-    //void SetDiceNum(int diceNum)
-    //{
-    //    this.diceNum = diceNum;
-    //}
-
-    void SyscDiceNum()
+    void SyncDiceNum()
     {
-        //PhotonView pv = myPlayerObject.GetPhotonView();
-        //pv.RPC("SetDiceNum", RpcTarget.AllBuffered, diceNum);
+        myPlayer.SyncDiceNum();
     }
 
 
     // *OnClick Listener
     public void OnClickObstacleBtn()
     {
+        isBtnSelected = true;
         isObstacleSelected = true;
-        // *ë²„íŠ¼ í´ë¦­ flag (isBtnSelected) ì°¸ìœ¼ë¡œ ì„¤ì •.
-        // *Btn UI ë¹„í™œì„±í™”
+        inputObstacleButton.SetActive(false);
+        inputMoveButton.SetActive(false);
+        // *¹öÆ° Å¬¸¯ flag (isBtnSelected) ÂüÀ¸·Î ¼³Á¤.
+        // *Btn UI ºñÈ°¼ºÈ­
     }
     public void OnClickMoveBtn()
-    {
+    { 
+        isBtnSelected = true;
         isObstacleSelected = false;
-        // *ë²„íŠ¼ í´ë¦­ flag (isBtnSelected) ì°¸ìœ¼ë¡œ ì„¤ì •.
-        // *Btn UI ë¹„í™œì„±í™”
+        inputObstacleButton.SetActive(false);
+        inputMoveButton.SetActive(false);
+        // *¹öÆ° Å¬¸¯ flag (isBtnSelected) ÂüÀ¸·Î ¼³Á¤.
+        // *Btn UI ºñÈ°¼ºÈ­
     }
 
     // coroutine
     IEnumerator InputProcess()
     {
-        // ì£¼ì‚¬ìœ„ êµ´ë¦¬ê¸° -> master clientë§Œ í˜¸ì¶œ
-        RollingDice();  // delay ì£¼ê¸°
-        yield return new WaitForSeconds(2f);
+        // ÁÖ»çÀ§ ±¼¸®±â -> master client¸¸ È£Ãâ
+        RollingDice();  // delay ÁÖ±â
+        yield return new WaitForSeconds(1f);
 
-        // ì£¼ì‚¬ìœ„ ë™ê¸°í™”
-        SyscDiceNum();
+        // ÁÖ»çÀ§ µ¿±âÈ­
+        SyncDiceNum();
+        yield return new WaitForSeconds(1f);
 
-        // *ì£¼ì‚¬ìœ„ ëˆˆ ìˆ˜ UIì— í‘œì‹œ
+        // *ÁÖ»çÀ§ ´« ¼ö UI¿¡ Ç¥½Ã
         ChangeDiceUI();
 
-        // UIë¡œ ì¥ì• ë¬¼ ë†“ì„ê±´ì§€ ì´ë™í• ê±´ì§€ ì…ë ¥ ë°›ìŒ
-        // *ì¥ì• ë¬¼, ì´ë™ ì„ íƒ UI í‘œì‹œ
+        // UI·Î Àå¾Ö¹° ³õÀ»°ÇÁö ÀÌµ¿ÇÒ°ÇÁö ÀÔ·Â ¹ŞÀ½
+        // *Àå¾Ö¹°, ÀÌµ¿ ¼±ÅÃ UI Ç¥½Ã
         ShowSelectUI();
 
-        // *ì‹œê°„ ì œí•œ í•¨ìˆ˜(ì‹œê°„ count)
-        // StartCoroutine(TimeCount());
-        // ì‹œê°„ ì¬ëŠ” flag true ì„¤ì •
-        isTimeCheck = true;
-        startTime = Time.time;
-        ShowTimeUI();
+        // *½Ã°£ Á¦ÇÑ ÇÔ¼ö(½Ã°£ count)
+        //StartCoroutine(TimeCount());
 
-        // ë²„íŠ¼ì´ ì„ íƒë˜ì§€ ì•Šìœ¼ë©´ ëŒ€ê¸°
-        // í•˜ì§€ë§Œ ë²„íŠ¼ì´ ì„ íƒë˜ì§€ ì•Šë”ë¼ë„ ì‹œê°„ì´ ì´ˆê³¼ë˜ë©´ ë¹ ì ¸ë‚˜ì˜¤ê¸° 
-        while (!isBtnSelected && currentTime <= maxTime)
+        // ¹öÆ°ÀÌ ¼±ÅÃµÇÁö ¾Ê°Å³ª ½Ã°£ÀÌ ÃÊ°úµÇÁö ¾ÊÀ¸¸é ´ë±â
+        while (!isBtnSelected || (currentTime >= maxTime))
         {
             yield return null;
         }
-        // ì…ë ¥ì— ë”°ë¼ ì´ë™, ì¥ì• ë¬¼ ì„¤ì¹˜ ì…ë ¥ í•¨ìˆ˜ ì‹¤í–‰ 
+        // ÀÔ·Â¿¡ µû¶ó ÀÌµ¿, Àå¾Ö¹° ¼³Ä¡ ÀÔ·Â ÇÔ¼ö ½ÇÇà 
         if (isBtnSelected)
         {
             if (isObstacleSelected)
             {
-                // *ì´ë™ ì„ íƒí–ˆì„ ê²½ìš°, í”Œë ˆì´ì–´ì—ì„œ ì´ë™ ì…ë ¥ ë°›ìŒ
+                // *ÀÌµ¿ ¼±ÅÃÇßÀ» °æ¿ì, ÇÃ·¹ÀÌ¾î¿¡¼­ ÀÌµ¿ ÀÔ·Â ¹ŞÀ½
                 myPlayer.InputObstacle();
             }
             else
             {
-                // *ì¥ì• ë¬¼ ì„¤ì¹˜ ì„ íƒí–ˆì„ ê²½ìš°, í”Œë ˆì´ì–´ì—ì„œ ì¥ì• ë¬¼ ì„¤ì¹˜ ì…ë ¥ ë°›ìŒ
+                // *Àå¾Ö¹° ¼³Ä¡ ¼±ÅÃÇßÀ» °æ¿ì, ÇÃ·¹ÀÌ¾î¿¡¼­ Àå¾Ö¹° ¼³Ä¡ ÀÔ·Â ¹ŞÀ½
                 myPlayer.InputMove(diceNum);
             }
         }
-
-        // ë„¤íŠ¸ì›Œí¬ì— ëª¨ë“  í”Œë ˆì´ì–´ê°€ ì…ë ¥ì´ ì™„ë£Œ ëëŠ”ì§€ í™•ì¸
-        // if (EveryPlayerReady())
-        // {
-        //     state = BattleState.SetObstacle;
-        //     isProcessing = false;
-        // }
-        // ë‘˜ë‹¤ ì™„ì„±ë˜ì§€ ì•Šìœ¼ë©´ ëŒ€ê¸°
+        // µÑ´Ù ÀÔ·ÂÀÌ ¿Ï·áµÉ ¶§±îÁö ´ë±â
         while (!EveryPlayerReady())
         {
             yield return null;
         }
         state = BattleState.SetObstacle;
-        isProcessing = false;
+        isProgressing = false;
     }
 
-    // *boardë¥¼ ë’¤ì ¸ì„œ obstacle ì„¤ì¹˜
+    // *board¸¦ µÚÁ®¼­ obstacle ¼³Ä¡
     IEnumerator SetObstacle()
     {
+        // *isObstacle flag°¡ »õ¿öÁ® ÀÖ´Â tileµéÀ» Ã£°í ±× tileµéÀÇ tileIndex °¡Á®¿À±â
+        // tileÀÇ index¸¦ ÅëÇØ Àå¾Ö¹° ¼³Ä¡
+        // Àå¾Ö¹°À» prefabÀ¸·Î ¹Ş¾Æ¼­ tileÀÇ tileIndexÀ» ÀÌ¿ëÇØ¼­ ÇØ´ç À§Ä¡¿¡ Àå¾Ö¹° spawn
+        for (int i = 0; i < boardRow; i++)
+        {
+            for (int j = 0; j < boardCol; j++)
+            {
+                if (board[i, j].isObstacle == true)
+                    Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
+            }
+        }
 
-        // *isObstacle flagê°€ ìƒˆì›Œì ¸ ìˆëŠ” tileë“¤ì„ ì°¾ê³  ê·¸ tileë“¤ì˜ tileIndex ê°€ì ¸ì˜¤ê¸°
-        // tileì˜ indexë¥¼ í†µí•´ ì¥ì• ë¬¼ ì„¤ì¹˜
-        // ì¥ì• ë¬¼ì„ prefabìœ¼ë¡œ ë°›ì•„ì„œ tileì˜ tileIndexì„ ì´ìš©í•´ì„œ í•´ë‹¹ ìœ„ì¹˜ì— ì¥ì• ë¬¼ spawn
-
-
-        // 2ì´ˆ ëŒ€ê¸°
+        // 2ÃÊ ´ë±â
         yield return new WaitForSeconds(2f);
         state = BattleState.Move;
-        isProcessing = false;
+        isProgressing = false;
     }
 
-    // **ëª¨ë“  í”Œë ˆì´ì–´ ì´ë™í•˜ë©´ì„œ íƒ€ì¼ ìƒ‰ì¹  
+    // **¸ğµç ÇÃ·¹ÀÌ¾î ÀÌµ¿ÇÏ¸é¼­ Å¸ÀÏ »öÄ¥ 
     IEnumerator AllMove()
     {
-        // *myPlayer ë©¤ë²„ ë³€ìˆ˜ë¥¼ ì´ìš©í•´ì„œ ì´ë™ + ìƒ‰ì¹ 
-        // ì´ë™ + ìƒ‰ì¹ ì€ RPC í•¨ìˆ˜ ì•ˆì—ì„œ êµ¬í˜„í•´ì•¼í• ë“¯
-        // ìƒ‰ì¹ ì‹œ ì˜ˆì™¸ ì¡°ê±´ í•„ìš”
-        // AllMove()ë¥¼ êµ¬í˜„í•˜ê¸° ìœ„í•´ì„œ Playerì— í•„ìš”í•œ í•¨ìˆ˜ê°€ ìˆì„ì‹œ ë”°ë¡œ ë§Œë“¤ê¸°
-        // ì´ë™ì€ playerì˜ bufferë¥¼ í†µí•´ì„œ í•´ë‹¹ ê²½ë¡œë¡œ ì´ë™
-        // ë§Œì•½ bufferê°€ ë¹„ì–´ ìˆìœ¼ë©´ (ì…ë ¥ê°’ì´ ì—†ìœ¼ë©´) return
-        // ì´ë™ì‹œ delay í•„ìš”í• ë“¯ -> yieldë¬¸ í™œìš©
-        // *ì´ë™ì‹œ boardì˜ tileì— ì¥ì• ë¬¼ì´ ì„¤ì¹˜ë˜ì–´ ìˆìœ¼ë©´ í•´ë‹¹ ì´ë™ ë¶ˆê°€
-        // ì¡ê¸° ì‹œìŠ¤í…œ í•„ìš” -> ì¼ë‹¨ ì§€ê¸ˆì€ êµ¬í˜„ ì•ˆí•˜ëŠ” ê±¸ë¡œ (ë„¤íŠ¸ì›Œí¬ ë¶€ë¶„ì´ ë“¤ì–´ê°€ì„œ ì–˜ê¸°í•´ë´ì•¼í•¨)
+        // *myPlayer ¸â¹ö º¯¼ö¸¦ ÀÌ¿ëÇØ¼­ ÀÌµ¿ + »öÄ¥
+        // ÀÌµ¿ + »öÄ¥Àº RPC ÇÔ¼ö ¾È¿¡¼­ ±¸ÇöÇØ¾ßÇÒµí
+        // »öÄ¥½Ã ¿¹¿Ü Á¶°Ç ÇÊ¿ä
+        // AllMove()¸¦ ±¸ÇöÇÏ±â À§ÇØ¼­ Player¿¡ ÇÊ¿äÇÑ ÇÔ¼ö°¡ ÀÖÀ»½Ã µû·Î ¸¸µé±â
+        // ÀÌµ¿Àº playerÀÇ buffer¸¦ ÅëÇØ¼­ ÇØ´ç °æ·Î·Î ÀÌµ¿
+        // ¸¸¾à buffer°¡ ºñ¾î ÀÖÀ¸¸é (ÀÔ·Â°ªÀÌ ¾øÀ¸¸é) return
+        // ÀÌµ¿½Ã delay ÇÊ¿äÇÒµí -> yield¹® È°¿ë
+        // *ÀÌµ¿½Ã boardÀÇ tile¿¡ Àå¾Ö¹°ÀÌ ¼³Ä¡µÇ¾î ÀÖÀ¸¸é ÇØ´ç ÀÌµ¿ ºÒ°¡
+        // Àâ±â ½Ã½ºÅÛ ÇÊ¿ä -> ÀÏ´Ü Áö±İÀº ±¸Çö ¾ÈÇÏ´Â °É·Î (³×Æ®¿öÅ© ºÎºĞÀÌ µé¾î°¡¼­ ¾ê±âÇØºÁ¾ßÇÔ)
 
-
-        // ì¢…ë£Œ ì¡°ê±´ í™•ì¸
-        currentTurn++;
-        if (currentTurn > mainTurnNum) state = BattleState.Finish;
-        else state = BattleState.Input;
-        isProcessing = false;
+        // Á¾·á Á¶°Ç È®ÀÎ
+        if (++currentTurn > mainTurnNum)
+            state = BattleState.Finish;
+        else
+        {
+            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", false } });
+            state = BattleState.Input;
+        }
+        isProgressing = false;
         yield return null;
     }
 
-    // **ìŠ¹íŒ¨ í™•ì¸
+    // **½ÂÆĞ È®ÀÎ
     IEnumerator Finish()
     {
 
-        // * boardë¥¼ íƒìƒ‰í•´ì„œ player1ê³¼ player2ì˜ ì˜ì—­ ì°¾ê¸° 
-        // * ìŠ¹íŒ¨ UI í‘œì‹œ
+        // * board¸¦ Å½»öÇØ¼­ player1°ú player2ÀÇ ¿µ¿ª Ã£±â 
+        // * ½ÂÆĞ UI Ç¥½Ã
         yield return null;
     }
 

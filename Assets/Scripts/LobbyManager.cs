@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 public class LobbyManager : MonoBehaviourPunCallbacks
 {
-    private readonly string gameVersion = "1.1";
+    private readonly string gameVersion = "1.0";
 
     public Text connectionInfoText;
     public Button joinButton;
