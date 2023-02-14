@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     GameObject myPlayerObject;
     Player myPlayer;
     // player 생성
-    [SerializeField] Transform[] spawnPositions;
+    public Transform[] spawnPositions;
     [SerializeField] GameObject playerPrefab;
     // processing flag
     bool isProcessing = false;
@@ -58,10 +58,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isBtnSelected;
     // Dice 객체 -> 일단 미사용
     //Dice dice;
-    public GameObject moveButton;
-    public GameObject selectMove;
-    public GameObject selectObs;
 
+    int SelectButton = 0;
 
 
     void Start()
@@ -147,31 +145,28 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *장애물 UI 표시
     private void ShowSelectUI()
     {
-        // 장애물, 이동 선택 UI 만들기
-        // *장애물, 이동 선택 UI 표시 -> SetActive() 함수 이용
-        selectMove.setActive(true);
-        selectObs.setActive(true);
+        // 장애물 OR 이동 선택 UI 만들기
+        public Button ChooseObstacle;
+        public Button ChooseMove;
+        // *장애물 or 이동 선택 UI 표시 -> SetActive() 함수 이용
+        ChooseObstacle.SetActive(true);
+        ChooseMove.SetActive(true);
+
+        if (ChooseObstacle.OnClick()) {
+            OnClickObstacleBtn();
+        }
+        else if (ChooseMove.OnClick()) {
+            OnClickMoveBtn();
+        }
+
         // 장애물 버튼 선택시 OnClick Listener -> OnClickObstacleBtn()
         // 이동 버튼 선택시 OnClick Listener -> OnClickMoveBtn()
 
     }
-
-
-    public void OnClickChooseMov()
-    {
-        selectMove.setActive(false);
-        selectObs.setActive(false);
-    }
-    public void OnClickChooseObs()
-    {
-        selectMove.setActive(false);
-        selectObs.setActive(false);
-    }
-
-
     // *주사위 UI 업데이트
     private void ChangeDiceUI()
     {
+        diceUi.text = diceNum.ToString();
         // dice 수를 표시하는 UI 만들기
         // *dice 수를 표시하는 UI를 받아와서 업데이트
         // NewGameMgr 의 변수 diceNum 이용
@@ -239,11 +234,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
         isObstacleSelected = true;
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
+        obstacleButton.SetActive(false);
         // *Btn UI 비활성화
     }
     public void OnClickMoveBtn()
     {
-
+        
         /*내가 물어봐야겠다.*/
         isObstacleSelected = false;
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
@@ -252,7 +248,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         moveButton.SetActive(false);
 
     }
- 
+
     // coroutine
     IEnumerator InputProcess()
     {
@@ -311,14 +307,28 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
+        for (int i = 0; i < boardRow; i++) {
+            for (int j = 0; j < boardCol; j++) {
+                if (board[i, j].isObstacle == true) {
+                    Instantiate(obstaclePrefab, board[i, j].transform);
+                }
+            }
+            
+        }
 
-        // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
-        // tile의 index를 통해 장애물 설치
-        // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
+        for (int j = 0; j < boardCol; j++)
+        {
+            if (board[i, j].isObstacle == true) Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
+        }
+    }
+
+    // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
+    // tile의 index를 통해 장애물 설치
+    // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
 
 
-        // 2초 대기
-        yield return new WaitForSeconds(2f);
+    // 2초 대기
+    yield return new WaitForSeconds(2f);
         state = BattleState.Move;
         isProcessing = false;
     }
@@ -348,38 +358,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **승패 확인
     IEnumerator Finish()
     {
-        int redScore = 0;
-        int blueScore = 0;
 
         // * board를 탐색해서 player1과 player2의 영역 찾기 
-        for (int i = 0; i < boardRow; i++)
-        {
-            for (int j = 0; j < boardCol; j++)
-            {
-                if (board[i, j].color == Tile.TileColor.RED)
-                {
-                    redScore += 1;
-                }
-                else if (board[i, j].color == Tile.TileColor.BLUE)
-                {
-                    blueScore += 1;
-                }
-            }
-        }
-        if (redScore > blueScore)
-            Debug.Log("Player 1 Win!");
-
-        else if (redScore < blueScore)
-            Debug.Log("Player 2 Win!");
-
-        else
-            Debug.Log("Draw");
-
         // * 승패 UI 표시
         yield return null;
-
-
-
-
     }
+
+
+
 }
