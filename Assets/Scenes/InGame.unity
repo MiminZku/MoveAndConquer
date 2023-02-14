@@ -1636,16 +1636,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tiles: {fileID: 714382256}
-  diceNum: 0
   spawnPositions:
   - {fileID: 1168355400}
   - {fileID: 1147643928}
   playerPrefab: {fileID: 5007558601542243069, guid: 484589ae8518845498ac57c16e0582e0, type: 3}
+  currentTime: 0
+  maxTime: 30
+  timeText: {fileID: 1423059496}
   obstaclePrefab: {fileID: 4177059918518949826, guid: d66b51a4ea3e47c489709eef00723494, type: 3}
   inputObstacleButton: {fileID: 1711964922}
   inputMoveButton: {fileID: 1561163011}
   diceText: {fileID: 1656876576}
-  timeText: {fileID: 1423059498}
 --- !u!4 &1116056490
 Transform:
   m_ObjectHideFlags: 0

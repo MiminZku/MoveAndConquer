@@ -68,6 +68,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isTimeCheck = false;
     [SerializeField] GameObject timeText;
 
+    // 여러 필요한 레퍼런스 변수들
+    [SerializeField] GameObject obstaclePrefab;
+    [SerializeField] GameObject inputObstacleButton;
+    [SerializeField] GameObject inputMoveButton;
+    [SerializeField] Text diceText;
+
     void Start()
     {
         // board 초기화
@@ -100,6 +106,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
+        if (PhotonNetwork.PlayerList.Length < 2) return;
         if(isTimeCheck) CheckTime();
         GameProcess();
     }
@@ -112,7 +119,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 시간 줄이면서 줄인 값 UI에 업데이트
         Text txt = timeText.GetComponent<Text>();
-        txt.text = "Time : " + (maxTime - currentTime);
+        txt.text = "Time : " + (int)(maxTime - currentTime);
 
         // 시간이 다 지나면 Time UI 비활성화
         if (currentTime >= maxTime)
@@ -167,8 +174,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
         {
             Hashtable cp = player.CustomProperties;
-            Debug.Log(cp["isMoveReady"]);
-            if (!(bool)cp["isMoveReady"]) return false;
+            Debug.Log(cp["isInputDone"]);
+            if (!(bool)cp["isInputDone"]) return false;
         }
         return true;
     }
@@ -180,6 +187,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *장애물, 이동 선택 UI 표시 -> SetActive() 함수 이용
         // 장애물 버튼 선택시 OnClick Listener -> OnClickObstacleBtn()
         // 이동 버튼 선택시 OnClick Listener -> OnClickMoveBtn()
+        isBtnSelected = false;
+        inputObstacleButton.SetActive(true);
+        inputMoveButton.SetActive(true);
 
     }
     // *주사위 UI 업데이트
@@ -188,28 +198,31 @@ public class GameManager : MonoBehaviourPunCallbacks
         // dice 수를 표시하는 UI 만들기
         // *dice 수를 표시하는 UI를 받아와서 업데이트
         // NewGameMgr 의 변수 diceNum 이용
+        diceText.text = "Dice : " + diceNum.ToString();
     }
-    // Time 줄어드는 함수
-    IEnumerator TimeCount()
-    {
-        // *Time UI 띄우기
-        ShowTimeUI();
-        // *시간 줄이면서 줄인 값 UI에 업데이트
-        // yield 사용해서 구현
-        // currentTime, maxTime 변수 이용
-        // 시간이 다 지나면 Time UI 비활성화
-        // battle state 를 setObstacle로 변경
-        if (currentTime >= maxTime)
-        {
 
-            // network
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
-        }
+    // Time 줄어드는 함수 -> 사용 안함
+    // IEnumerator TimeCount()
+    // {
+    //     // *Time UI 띄우기
+    //     ShowTimeUI();
+    //     // *시간 줄이면서 줄인 값 UI에 업데이트
+    //     // yield 사용해서 구현
+    //     // currentTime, maxTime 변수 이용
+    //     // 시간이 다 지나면 Time UI 비활성화
+    //     // battle state 를 setObstacle로 변경
+    //     if (currentTime >= maxTime)
+    //     {
 
-        // 아래 코드는 오류 방지를 위한 코드 
-        yield return null;
-    }
-    // *Time UI 띄우기
+    //         // network
+    //         PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+    //     }
+
+    //     // 아래 코드는 오류 방지를 위한 코드 
+    //     yield return null;
+    // }
+
+    // *Time UI 띄우기 -> 별로 필요없을듯
     void ShowTimeUI()
     {
         timeText.SetActive(true);
@@ -232,34 +245,34 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    // RPC 함수를 여기에서 정의해도 되나
-    // 안된다..
-    //[PunRPC]
-    //void SetDiceNum(int diceNum)
-    //{
-    //    this.diceNum = diceNum;
-    //}
-
     void SyscDiceNum()
     {
         //PhotonView pv = myPlayerObject.GetPhotonView();
         //pv.RPC("SetDiceNum", RpcTarget.AllBuffered, diceNum);
+        myPlayer.SyncDiceNum();
     }
 
 
     // *OnClick Listener
     public void OnClickObstacleBtn()
     {
-        isObstacleSelected = true;
+
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
+        isBtnSelected = true;
+        isObstacleSelected = true;
+        inputObstacleButton.SetActive(false);
+        inputMoveButton.SetActive(false);
     }
 
     public void OnClickMoveBtn()
     {
-        isObstacleSelected = false;
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
+        isBtnSelected = true;
+        isObstacleSelected = false;
+        inputObstacleButton.SetActive(false);
+        inputMoveButton.SetActive(false);
     }
 
     // coroutine
@@ -271,6 +284,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 주사위 동기화
         SyscDiceNum();
+        yield return new WaitForSeconds(1f);
 
         // *주사위 눈 수 UI에 표시
         ChangeDiceUI();
@@ -307,12 +321,6 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
 
-        // 네트워크에 모든 플레이어가 입력이 완료 됐는지 확인
-        // if (EveryPlayerReady())
-        // {
-        //     state = BattleState.SetObstacle;
-        //     isProcessing = false;
-        // }
         // 둘다 완성되지 않으면 대기
         while (!EveryPlayerReady())
         {
@@ -329,7 +337,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
-
+        for (int i = 0; i < boardRow; i++)
+        {
+            for (int j = 0; j < boardCol; j++)
+            {
+                if (board[i, j].isObstacle == true)
+                    Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
+            }
+        }
 
         // 2초 대기
         yield return new WaitForSeconds(2f);
@@ -352,9 +367,13 @@ public class GameManager : MonoBehaviourPunCallbacks
 
 
         // 종료 조건 확인
-        currentTurn++;
-        if (currentTurn > mainTurnNum) state = BattleState.Finish;
-        else state = BattleState.Input;
+        if (++currentTurn > mainTurnNum)
+            state = BattleState.Finish;
+        else
+        {
+            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", false } });
+            state = BattleState.Input;
+        }
         isProcessing = false;
         yield return null;
     }
