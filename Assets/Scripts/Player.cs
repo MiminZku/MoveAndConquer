@@ -29,7 +29,14 @@ public class Player : MonoBehaviourPun
     public bool isObstacleInput; // 입력 가능 flag
     private bool isMoveInput;
     private int moveCount;
-    // Start is called before the first frame update
+    
+    // 칠하기 위한 flags
+    bool isMoveRight = true;
+    bool isMoveLeft = true;
+    bool isMoveUp = true;
+    bool isMoveDown = true;
+
+
     void Start()
     {
         isMoveInput = false;
@@ -235,6 +242,52 @@ public class Player : MonoBehaviourPun
     void SyncDiceNumRPC(int diceNum)
     {
         GameManager.Instance.diceNum = diceNum;
+    }
+
+    // 현재 위치에서 이동할 수 있는 위치들 flag 세팅
+    public void setPathFlag()
+    {
+        int maxRow = GameManager.Instance.boardRow - 1;
+        int maxCol = GameManager.Instance.boardCol - 1;
+
+        
+        if(currentIndex.row == 0) { isMoveUp = false; } // 위로 이동 불가
+        else { isMoveUp = true; }
+
+        if(currentIndex.row == maxRow) { isMoveDown = false; } // 아래로 이동 불가
+        else { isMoveDown = true; }
+
+        if(currentIndex.col == 0){ isMoveLeft = false; } // 왼쪽으로 이동 불가
+        else { isMoveLeft = true;}
+
+        if(currentIndex.col == maxCol){ isMoveRight = false;} // 오른쪽으로 이동 불가
+        else { isMoveRight = true; }
+    }
+    // 이동 함수
+    public void Move(Index moveIndex)
+    {
+
+        currentIndex = moveIndex;
+
+        Tile moveTile = board[currentIndex.row, currentIndex.col];
+        float moveX = moveTile.transform.position.x;
+        float moveZ = moveTile.transform.position.z;
+        transform.position = new Vector3(moveX, transform.position.y, moveZ);
+        orgIndex = currentIndex;
+        // 움직이면서 타일 뒤집기 
+        // flag를 통해서 tile 뒤집기 tag를 통해서 색깔 지정
+        // tag로 player 지정
+        int mode;
+        if(photonView.IsMine) { mode = 1; } // Blue 색 
+        else { mode = 2; } //Red 색
+        // check flag
+        setPathFlag();
+        // change color
+        board[currentIndex.row , currentIndex.col].changeColor(mode);
+        if(isMoveUp) { board[currentIndex.row - 1 , currentIndex.col].changeColor(mode); }
+        if(isMoveDown) { board[currentIndex.row + 1 , currentIndex.col].changeColor(mode); }
+        if(isMoveRight) { board[currentIndex.row , currentIndex.col + 1].changeColor(mode); }
+        if(isMoveLeft) { board[currentIndex.row , currentIndex.col - 1].changeColor(mode); }
     }
 }
 

@@ -51,13 +51,13 @@ public class Tile : MonoBehaviour
                 meshRenderer.material = materials[0];
                 color = TileColor.BASE;
                 break;
-            case 1: // player1 (Red)
+            case 1: // player1 (Blue)
                 meshRenderer.material = materials[1];
-                color = TileColor.RED;
-                break;
-            case 2: // player2 (blue)
-                meshRenderer.material = materials[2];
                 color = TileColor.BLUE;
+                break;
+            case 2: // player2 (red)
+                meshRenderer.material = materials[2];
+                color = TileColor.RED;
                 break;
         }
     }

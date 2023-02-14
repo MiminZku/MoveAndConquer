@@ -33,8 +33,8 @@ public class GameManager : MonoBehaviourPunCallbacks
     // board 변수
     [SerializeField] GameObject tiles;
     public Tile[,] board;
-    const int boardRow = 9;
-    const int boardCol = 5;
+    [HideInInspector] public int boardRow = 9;
+    [HideInInspector] public int boardCol = 5;
     // Turn 체크 변수
     int mainTurnNum = 6;
     int currentTurn = 1;
@@ -326,6 +326,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             yield return null;
         }
+        //
+        isTimeCheck = false; 
+        //
         state = BattleState.SetObstacle;
         isProcessing = false;
     }
@@ -364,7 +367,41 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 이동시 delay 필요할듯 -> yield문 활용
         // *이동시 board의 tile에 장애물이 설치되어 있으면 해당 이동 불가
         // 잡기 시스템 필요 -> 일단 지금은 구현 안하는 걸로 (네트워크 부분이 들어가서 얘기해봐야함)
+        // 모든 player move buffer를 바탕으로 move 
 
+        Player[] players = FindObjectsOfType<Player>();
+        Index moveIndex;
+        //모든 플레이어 반복
+        for(int i = 0; i < players.Length; i++)
+        {
+            for(int j = 0; j < players[i].pathBuffer.Count; j++)
+            {
+                // buffer가 비어있으면 pass
+                if(players[i].pathBuffer.Count == 0) break;
+
+                moveIndex = players[i].pathBuffer[j];
+                // 이동할 index의 타일이 장애물 타일이면 패스
+                if(board[moveIndex.row, moveIndex.col].isObstacle) break;
+
+                // 충돌 타일은 기존 색 그대로 
+                // setCrashTile(moveIndex1, moveIndex2);
+                // 이동하면서 타일 색칠
+                players[i].Move(moveIndex);
+                // 자기 타일 색은 우선권 갖기
+                if (players[i].photonView.IsMine)
+                {
+                    board[moveIndex.row, moveIndex.col].changeColor(1);
+                }
+                else
+                {
+                    board[moveIndex.row, moveIndex.col].changeColor(2);
+                }
+                
+                yield return new WaitForSeconds(1f);
+            }
+            // 전부 이동하면 buffer 초기화
+            players[i].pathBuffer.Clear();
+        }
 
         // 종료 조건 확인
         if (++currentTurn > mainTurnNum)
