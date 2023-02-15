@@ -125,6 +125,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         if (currentTime >= maxTime)
         {
             timeText.SetActive(false);
+            myPlayer.TimeOver();
             // network
             PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
             // 시간 체크 flag false로 설정
@@ -336,7 +337,6 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
-
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
@@ -374,21 +374,25 @@ public class GameManager : MonoBehaviourPunCallbacks
                         players[0].pathBuffer.Count : players[1].pathBuffer.Count;
         for (int j = 0; j < bigger; j++)
         {
+            Index moveIndex;
             Index moveIndex1, moveIndex2;
             if (players[0].pathBuffer.Count != 0 && players[1].pathBuffer.Count != 0)
             {
                 moveIndex1 = players[0].pathBuffer[j];
                 moveIndex2 = players[1].pathBuffer[j];
-                // 충돌 타일은 기존 색 그대로 
-                SetCrashTile(moveIndex1, moveIndex2);
+                if(moveIndex1.row >= 0 && moveIndex2.row >= 0)
+                {
+                    // 충돌 타일은 기존 색 그대로 
+                    SetCrashTile(moveIndex1, moveIndex2);
+                }
             }
             foreach (Player p in players)
             {
-                Index moveIndex;
                 // buffer가 비어있으면 pass
                 if (p.pathBuffer.Count == 0)    continue;
-               
+                
                 moveIndex = p.pathBuffer[j];
+                if (moveIndex.row < 0) continue;
                 // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
                 if (board[moveIndex.row, moveIndex.col].isObstacle)
                 {
@@ -397,15 +401,22 @@ public class GameManager : MonoBehaviourPunCallbacks
                 }
                 // 이동하면서 타일 색칠
                 p.Move(moveIndex);
-                // 충돌타일 설정 초기화
-                for (int r = 0; r < boardRow; r++)
+            }
+            // 충돌타일 설정 초기화
+            for (int r = 0; r < boardRow; r++)
+            {
+                for (int c = 0; c < boardCol; c++)
                 {
-                    for (int c = 0; c < boardCol; c++)
-                    {
-                        board[r, c].isCrash = false;
-                    }
+                    board[r, c].isCrash = false;
                 }
-                // 자기 타일 색은 우선권 갖기
+            }
+            // 자기 타일 색은 우선권 갖기
+            foreach (Player p in players)
+            {
+                // buffer가 비어있으면 pass
+                if (p.pathBuffer.Count == 0) continue;
+                moveIndex = p.pathBuffer[j];
+                if (moveIndex.row < 0) continue;
                 if (p.photonView.IsMine)
                 {
                     board[moveIndex.row, moveIndex.col].changeColor(1);

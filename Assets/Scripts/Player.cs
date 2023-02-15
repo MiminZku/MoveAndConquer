@@ -1,4 +1,5 @@
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -288,6 +289,18 @@ public class Player : MonoBehaviourPun
         if(isMoveDown) { board[currentIndex.row + 1 , currentIndex.col].changeColor(mode); }
         if(isMoveRight) { board[currentIndex.row , currentIndex.col + 1].changeColor(mode); }
         if(isMoveLeft) { board[currentIndex.row , currentIndex.col - 1].changeColor(mode); }
+    }
+
+    internal void TimeOver()
+    {
+        int dN = GameManager.Instance.diceNum;
+        if (pathBuffer.Count < dN)
+        {
+            for (int i = 0; i < dN - pathBuffer.Count; i++)
+            {
+                photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+            }
+        }
     }
 }
 
