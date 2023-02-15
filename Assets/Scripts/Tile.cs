@@ -45,6 +45,7 @@ public class Tile : MonoBehaviour
     {
         // 충돌 일어나는 tile 이면 색칠 패스
          if(isCrash) { return; }
+        if (isObstacle) return;
 
         switch (mode)
         {
