@@ -284,7 +284,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 주사위 동기화
         SyscDiceNum();
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(2f);
 
         // *주사위 눈 수 UI에 표시
         ChangeDiceUI();
@@ -397,6 +397,14 @@ public class GameManager : MonoBehaviourPunCallbacks
                 }
                 // 이동하면서 타일 색칠
                 p.Move(moveIndex);
+                // 충돌타일 설정 초기화
+                for (int r = 0; r < boardRow; r++)
+                {
+                    for (int c = 0; c < boardCol; c++)
+                    {
+                        board[r, c].isCrash = false;
+                    }
+                }
                 // 자기 타일 색은 우선권 갖기
                 if (p.photonView.IsMine)
                 {
@@ -408,14 +416,6 @@ public class GameManager : MonoBehaviourPunCallbacks
                 }
             }
             yield return new WaitForSeconds(1f);
-            // 충돌타일 설정 초기화
-            for (int r = 0; r < boardRow; r++)
-            {
-                for (int c = 0; c < boardCol; c++)
-                {
-                    board[r, c].isCrash = false;
-                }
-            }
         }
         // 전부 이동하면 buffer 초기화
         foreach(Player p in players)
