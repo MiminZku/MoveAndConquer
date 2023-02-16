@@ -5,6 +5,7 @@ using UnityEngine;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 // ajdlfkjsldfjsdlkfj
 public enum BattleState
@@ -73,6 +74,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject inputObstacleButton;
     [SerializeField] GameObject inputMoveButton;
     [SerializeField] Text diceText;
+    private bool isGameStart;
 
     void Start()
     {
@@ -107,7 +109,18 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void Update()
     {
-        if (PhotonNetwork.PlayerList.Length < 2) return;
+        if (PhotonNetwork.CurrentRoom.PlayerCount < 2)
+        {
+            if(isGameStart)
+            {
+                PhotonNetwork.LeaveRoom();
+                SceneManager.LoadScene(0);
+            }
+            else
+            {
+                return;
+            }
+        }
         if (isTimeCheck) CheckTime();
         GameProcess();
     }
@@ -150,6 +163,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void GameProcess()
     {
+        if (!isGameStart) isGameStart = true;
         switch (state)
         {
             case BattleState.Start:
