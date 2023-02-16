@@ -530,10 +530,38 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **승패 확인
     IEnumerator Finish()
     {
-
-        // * board를 탐색해서 player1과 player2의 영역 찾기 
+        // * board를 탐색해서 player1과 player2의 영역 찾기
+        int myTiles = 0; int opponentTiles = 0;
+        for (int i = 0; i < boardRow; i++)
+        {
+            for(int j = 0; j < boardCol; j++)
+            {
+                if( board[i,j].color == Tile.TileColor.BLUE )
+                {
+                    myTiles += 1;
+                }
+                else if(board[i,j].color == Tile.TileColor.RED)
+                {
+                    opponentTiles += 1;
+                }
+            }
+        }
+        Debug.Log(string.Format("내가 칠한 타일 수 : {0}", myTiles));
+        Debug.Log(string.Format("상대가 칠한 타일 수 : {0}", opponentTiles));
         // * 승패 UI 표시
-        yield return null;
+        if (myTiles > opponentTiles)
+        {
+            Debug.Log("승리!!!");
+        }
+        else if(myTiles < opponentTiles)
+        {
+            Debug.Log("패배...");
+        }
+        else
+        {
+            Debug.Log("무승부!");
+        }
+        yield break;
     }
 
 
