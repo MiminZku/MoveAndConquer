@@ -86,6 +86,7 @@ public class Player : MonoBehaviourPun
             {
                 target = hit.collider.gameObject.GetComponent<Tile>();
             }
+
             if (IsPlayerOnTile(target))
             {
                 // 플레이어가 존재하는 타일은 클릭 안되게
@@ -305,6 +306,7 @@ public class Player : MonoBehaviourPun
                 photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
             }
         }
+        isObstacleInput = false;
     }
 }
 
