@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // int currentTime = 0;
 
     // 주사위 수 저장 변수
-    public int diceNum { get; set;}
+    public int diceNum { get; set; }
     // 현재 게임 프로세스 상태
     BattleState state;
     // Player 객체들 저장.
@@ -108,10 +108,19 @@ public class GameManager : MonoBehaviourPunCallbacks
     void Update()
     {
         if (PhotonNetwork.PlayerList.Length < 2) return;
-        if(isTimeCheck) CheckTime();
+        if (isTimeCheck) CheckTime();
         GameProcess();
     }
 
+    // 시간 초기화
+    void InitTime()
+    {
+        Debug.Log("InitTime");
+        isTimeCheck = true;
+        startTime = Time.time;
+        currentTime = Time.time - startTime;
+        ShowTimeUI();
+    }
     // 시간 체크
     void CheckTime()
     {
@@ -136,7 +145,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
 
         // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
-     
+
     }
 
     private void GameProcess()
@@ -316,19 +325,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         ShowSelectUI();
 
         // *시간 제한 함수(시간 count)
-        // StartCoroutine(TimeCount());
-        // 시간 재는 flag true 설정
-        isTimeCheck = true;
-        startTime = Time.time;
-        ShowTimeUI();
+        // 시간 재거나 필요한 변수들 초기화
+        InitTime();
 
         // 버튼이 선택되지 않으면 대기
         // 하지만 버튼이 선택되지 않더라도 시간이 초과되면 빠져나오기 
         Debug.Log("currentTime 전: " + currentTime);
-        do 
+        while (!isBtnSelected && currentTime <= maxTime)
         {
             yield return null;
-        } while(!isBtnSelected && currentTime <= maxTime);
+        }
         Debug.Log("currentTime 후: " + currentTime);
         // 입력에 따라 이동, 장애물 설치 입력 함수 실행 
         if (isBtnSelected)
@@ -417,7 +423,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             {
                 moveIndex1 = players[0].pathBuffer[j];
                 moveIndex2 = players[1].pathBuffer[j];
-                if(moveIndex1.row >= 0 && moveIndex2.row >= 0)
+                if (moveIndex1.row >= 0 && moveIndex2.row >= 0)
                 {
                     // 충돌 타일은 기존 색 그대로 
                     SetCrashTile(moveIndex1, moveIndex2);
@@ -426,8 +432,8 @@ public class GameManager : MonoBehaviourPunCallbacks
             foreach (Player p in players)
             {
                 // buffer가 비어있으면 pass
-                if (p.pathBuffer.Count == 0)    continue;
-                
+                if (p.pathBuffer.Count == 0) continue;
+
                 moveIndex = p.pathBuffer[j];
                 if (moveIndex.row < 0) continue;
                 // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
@@ -466,7 +472,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             yield return new WaitForSeconds(1f);
         }
         // 전부 이동하면 buffer 초기화
-        foreach(Player p in players)
+        foreach (Player p in players)
         {
             p.pathBuffer.Clear();
         }
@@ -498,9 +504,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             new Index(moveIndex2.row, moveIndex2.col-1),
             new Index(moveIndex2.row, moveIndex2.col+1)};
 
-        foreach(Index i in tileIndex1)
+        foreach (Index i in tileIndex1)
         {
-            foreach(Index j in tileIndex2)
+            foreach (Index j in tileIndex2)
             {
                 if (i.Equals(j)) board[i.row, i.col].isCrash = true;
             }
