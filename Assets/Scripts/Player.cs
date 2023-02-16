@@ -89,6 +89,7 @@ public class Player : MonoBehaviourPun
 
             if (IsPlayerOnTile(target))
             {
+                Debug.Log("플레이어가 있는 타일 선택 불가");
                 // 플레이어가 존재하는 타일은 클릭 안되게
                 // 조건에 있는 함수 미완성 상태
             }
@@ -181,6 +182,11 @@ public class Player : MonoBehaviourPun
 
     private bool IsPlayerOnTile(Tile target)
     {
+        Player[] players = FindObjectsOfType<Player>();
+        foreach(Player p in players)
+        {
+            if(p.currentIndex.Equals(target.tileIndex)) { return true; }
+        }
         return false;
     }
 
@@ -307,6 +313,11 @@ public class Player : MonoBehaviourPun
             }
         }
         isObstacleInput = false;
+    }
+
+    internal void UpdateIndex()
+    {
+        photonView.RPC("SetIndex", RpcTarget.AllBuffered,currentIndex.row, currentIndex.col);
     }
 }
 

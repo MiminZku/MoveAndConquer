@@ -476,7 +476,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             p.pathBuffer.Clear();
         }
-
+        myPlayer.UpdateIndex();
 
         // 종료 조건 확인
         if (++currentTurn > mainTurnNum)
