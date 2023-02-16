@@ -2231,7 +2231,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 'Time : 30'
+  m_Text: 'Time : '
 --- !u!222 &1423059499
 CanvasRenderer:
   m_ObjectHideFlags: 0

@@ -74,6 +74,8 @@ public class Player : MonoBehaviourPun
     // Update is called once per frame
     void Update()
     {
+
+        // Debug.Log("isMoveInput flag : " + isMoveInput);
         if (!photonView.IsMine) return;
         if (isObstacleInput == true && Input.GetMouseButtonDown(0)) // *** 객체 hit 함수 추가
         {
@@ -184,6 +186,7 @@ public class Player : MonoBehaviourPun
     // *클릭으로 입력받고 클릭한 클릭한 타일의 isObstacle flag를 변경해줌
     public void InputObstacle()
     {
+        Debug.Log("InputObstacle");
         isObstacleInput = true;
         // flag 를 이 함수에서 바꿔주고 Update() 에서 입력을 받기
         // flag는 입력을 받을 수 잇는 상태를 나타냄
@@ -202,6 +205,7 @@ public class Player : MonoBehaviourPun
     // *이동을 입력받고 이동 경로를 NewPlayer 클래스가 가지고 있는 pathBuffer 변수에 저장.
     public void InputMove(int diceNum)
     {
+        Debug.Log("InputMove");
         isMoveInput = true;
         moveCount = 0;
         pathBuffer.Clear();

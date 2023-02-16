@@ -6,7 +6,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 using UnityEngine.UI;
 
-
+// ajdlfkjsldfjsdlkfj
 public enum BattleState
 {
     Start,
@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // Time 체크 변수 
     [HideInInspector] public float currentTime = 0;
     float startTime = 0;
-    [HideInInspector] public float maxTime = 30f;
+    [HideInInspector] float maxTime = 10f;
     bool isTimeCheck = false;
     [SerializeField] GameObject timeText;
 
@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         SpanwPlayer();
         // 상태 초기화
         state = BattleState.Start;
+        timeText.GetComponent<Text>().text = "Time : " + maxTime;
     }
 
     private void SpanwPlayer()
@@ -124,6 +125,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 시간이 다 지나면 Time UI 비활성화
         if (currentTime >= maxTime)
         {
+            // 선택 UI도 비활성화
+            HideSelectUI();
             timeText.SetActive(false);
             myPlayer.TimeOver();
             // network
@@ -175,7 +178,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         foreach (Photon.Realtime.Player player in PhotonNetwork.PlayerList)
         {
             Hashtable cp = player.CustomProperties;
-            Debug.Log(cp["isInputDone"]);
+            // Debug.Log(cp["isInputDone"]);
             if (!(bool)cp["isInputDone"]) return false;
         }
         return true;
@@ -184,6 +187,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *장애물 UI 표시
     private void ShowSelectUI()
     {
+        Debug.Log("ShowSelectUI");
         // 장애물, 이동 선택 UI 만들기
         // *장애물, 이동 선택 UI 표시 -> SetActive() 함수 이용
         // 장애물 버튼 선택시 OnClick Listener -> OnClickObstacleBtn()
@@ -193,9 +197,17 @@ public class GameManager : MonoBehaviourPunCallbacks
         inputMoveButton.SetActive(true);
 
     }
+    // 장애물 UI 없애기
+    private void HideSelectUI()
+    {
+        inputObstacleButton.SetActive(false);
+        inputMoveButton.SetActive(false);
+    }
+
     // *주사위 UI 업데이트
     private void ChangeDiceUI()
     {
+        Debug.Log("ChangeDiceUI");
         // dice 수를 표시하는 UI 만들기
         // *dice 수를 표시하는 UI를 받아와서 업데이트
         // NewGameMgr 의 변수 diceNum 이용
@@ -226,11 +238,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *Time UI 띄우기 -> 별로 필요없을듯
     void ShowTimeUI()
     {
+        Debug.Log("ShowTimeUI");
         timeText.SetActive(true);
     }
     // *Time UI 숨기기
     void HideTimeUI()
     {
+        Debug.Log("HideTimeUI");
         timeText.SetActive(false);
     }
 
@@ -238,6 +252,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // dice 클래스 사용안할시
     void RollingDice()
     {
+        Debug.Log("RollingDice");
         // 마스터 클라이언트에서만 호출
         if (PhotonNetwork.IsMasterClient)
         {
@@ -248,6 +263,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     void SyscDiceNum()
     {
+        Debug.Log("SyscDiceNum");
         //PhotonView pv = myPlayerObject.GetPhotonView();
         //pv.RPC("SetDiceNum", RpcTarget.AllBuffered, diceNum);
         myPlayer.SyncDiceNum();
@@ -257,23 +273,28 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *OnClick Listener
     public void OnClickObstacleBtn()
     {
-
+        Debug.Log("OnClickObstacleBtn");
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
         isObstacleSelected = true;
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
+        Debug.Log("isBtnSelected : " + isBtnSelected);
+        Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
 
     public void OnClickMoveBtn()
     {
+        Debug.Log("OnClickMoveBtn");
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
         isObstacleSelected = false;
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
+        Debug.Log("isBtnSelected : " + isBtnSelected);
+        Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
 
     // coroutine
@@ -303,23 +324,37 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 버튼이 선택되지 않으면 대기
         // 하지만 버튼이 선택되지 않더라도 시간이 초과되면 빠져나오기 
-        while (!isBtnSelected && currentTime <= maxTime)
+        Debug.Log("currentTime 전: " + currentTime);
+        do 
         {
             yield return null;
-        }
+        } while(!isBtnSelected && currentTime <= maxTime);
+        Debug.Log("currentTime 후: " + currentTime);
         // 입력에 따라 이동, 장애물 설치 입력 함수 실행 
         if (isBtnSelected)
         {
             if (isObstacleSelected)
             {
                 // *이동 선택했을 경우, 플레이어에서 이동 입력 받음
+                Debug.Log("장애물 선택");
                 myPlayer.InputObstacle();
             }
             else
             {
+                Debug.Log("이동 선택");
                 // *장애물 설치 선택했을 경우, 플레이어에서 장애물 설치 입력 받음
                 myPlayer.InputMove(diceNum);
             }
+        }
+        else // 버튼을 누르지 않았는데 시간이 초과되는 경우
+        {
+            // HideSelectUI();
+            // timeText.SetActive(false);
+            // myPlayer.TimeOver();
+            // // network
+            // PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+            // // 시간 체크 flag false로 설정
+            // isTimeCheck = false;
         }
 
         // 둘다 완성되지 않으면 대기
@@ -328,7 +363,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             yield return null;
         }
         //
-        isTimeCheck = false; 
+        isTimeCheck = false;
         //
         state = BattleState.SetObstacle;
         isProcessing = false;
@@ -337,6 +372,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
+        Debug.Log("SetObstacle");
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
@@ -358,6 +394,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **모든 플레이어 이동하면서 타일 색칠 
     IEnumerator AllMove()
     {
+        Debug.Log("AllMove");
         // *myPlayer 멤버 변수를 이용해서 이동 + 색칠
         // 이동 + 색칠은 RPC 함수 안에서 구현해야할듯
         // 색칠시 예외 조건 필요
@@ -449,6 +486,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
     private void SetCrashTile(Index moveIndex1, Index moveIndex2)
     {
+        Debug.Log("SetCrashTile");
         Index[] tileIndex1 = {moveIndex1,
             new Index(moveIndex1.row-1, moveIndex1.col),
             new Index(moveIndex1.row+1, moveIndex1.col),
