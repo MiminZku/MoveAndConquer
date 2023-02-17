@@ -74,6 +74,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject inputObstacleButton;
     [SerializeField] GameObject inputMoveButton;
     [SerializeField] Text diceText;
+    [SerializeField] Text turnText;
     private bool isGameStart;
 
     void Start()
@@ -142,7 +143,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 시간 줄이면서 줄인 값 UI에 업데이트
         Text txt = timeText.GetComponent<Text>();
-        txt.text = "Time : " + (int)(maxTime - currentTime);
+        txt.text = ""+(int)(maxTime - currentTime  + 1);
 
         // 시간이 다 지나면 Time UI 비활성화
         if (currentTime >= maxTime)
@@ -323,6 +324,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // coroutine
     IEnumerator InputProcess()
     {
+        ChangeTurnUI();
         // 주사위 굴리기 -> master client만 호출
         RollingDice();  // delay 주기
         yield return new WaitForSeconds(2f);
@@ -387,6 +389,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         //
         state = BattleState.SetObstacle;
         isProcessing = false;
+    }
+
+    private void ChangeTurnUI()
+    {
+        turnText.text = "Turn : " + currentTurn;
     }
 
     // *board를 뒤져서 obstacle 설치
