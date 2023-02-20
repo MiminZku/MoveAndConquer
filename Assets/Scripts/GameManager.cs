@@ -74,10 +74,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject inputMoveButton;
     [SerializeField] Text diceText;
     [SerializeField] Text turnText;
+    [SerializeField] Text roomNameText;
     private bool isGameStart;
 
     void Start()
     {
+        roomNameText.text = "Room : " + PhotonNetwork.CurrentRoom.Name;
         // board 초기화
         board = new Tile[boardRow, boardCol];
         for (int i = 0; i < boardRow; i++)
@@ -96,7 +98,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         SpanwPlayer();
         // 상태 초기화
         state = BattleState.Start;
-        timeText.GetComponent<Text>().text = "Time : " + maxTime;
+        timeText.GetComponent<Text>().text = "" + maxTime;
     }
 
     private void SpanwPlayer()
@@ -166,9 +168,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             isTimeCheck = false;
         }
 
-        // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
+    // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
 
-    }
+}
 
     private void GameProcess()
     {
@@ -378,13 +380,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         else // 버튼을 누르지 않았는데 시간이 초과되는 경우
         {
-            // HideSelectUI();
-            // timeText.SetActive(false);
-            // myPlayer.TimeOver();
-            // // network
-            // PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
-            // // 시간 체크 flag false로 설정
-            // isTimeCheck = false;
+            //// 선택 UI도 비활성화
+            //HideSelectUI();
+            //timeText.SetActive(false);
+            //myPlayer.TimeOver();
+            //yield return new WaitForSeconds(2f);
+            //// network
+            //PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
         }
 
         // 둘다 완성되지 않으면 대기
@@ -678,6 +680,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         yield break;
     }
 
+    public void OnClickSurrenderButton()
+    {
+        PhotonNetwork.LeaveRoom();
+        SceneManager.LoadScene(0);
+    }
 
 
 }

@@ -94,6 +94,10 @@ public class Player : MonoBehaviourPun
                 // 플레이어가 존재하는 타일은 클릭 안되게
                 // 조건에 있는 함수 미완성 상태
             }
+            else if (target.isObstacle)
+            {
+                Debug.Log("이미 장애물 설치된 타일 선택 불가");
+            }
             else
             {
                 isObstacleInput = false;
