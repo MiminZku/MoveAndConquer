@@ -7,7 +7,6 @@ using Random = UnityEngine.Random;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-// ajdlfkjsldfjsdlkfj
 public enum BattleState
 {
     Start,
@@ -59,13 +58,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isObstacleSelected;
     // obstacle 버튼을 선택하든 move 버튼을 선택하든 선택하면 true
     bool isBtnSelected;
-    // Dice 객체 -> 일단 미사용
-    //Dice dice;
+    // 말이 잡혀서 게임이 종료되는 경우 사용
+    bool isGameOver = false;
 
     // Time 체크 변수 
     [HideInInspector] public float currentTime = 0;
     float startTime = 0;
-    [HideInInspector] float maxTime = 10f;
+    [HideInInspector] float maxTime = 15f;
     bool isTimeCheck = false;
     [SerializeField] GameObject timeText;
 
@@ -138,6 +137,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // 시간 체크
     void CheckTime()
     {
+        
         // 장애물과 이동 선택 UI 뜨는 순간부터 시간 재기 시작
         currentTime = Time.time - startTime;
 
@@ -148,10 +148,18 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 시간이 다 지나면 Time UI 비활성화
         if (currentTime >= maxTime)
         {
+            Debug.Log("시간초과");
             // 선택 UI도 비활성화
             HideSelectUI();
             timeText.SetActive(false);
-            myPlayer.TimeOver();
+            // myPlayer.TimeOver();
+            Player[] players = FindObjectsOfType<Player>();
+            foreach(Player p in players)
+            {
+                p.TimeOver();
+                Debug.Log("Time check에서 pathbuffer : " + p.pathBuffer.Count);
+            }
+
             // network
             PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
             // 시간 체크 flag false로 설정
@@ -384,9 +392,12 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             yield return null;
         }
-        //
-        isTimeCheck = false;
-        //
+        // 시간이 초과되지 않아도 다 입력이 완료되면 time check 비활성화 
+        yield return new WaitForSeconds(1.5f);
+        if(EveryPlayerReady()) isTimeCheck = false;
+
+        // yield return new WaitForSeconds(1.5f);
+
         state = BattleState.SetObstacle;
         isProcessing = false;
     }
@@ -434,22 +445,39 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 모든 player move buffer를 바탕으로 move 
 
         Player[] players = FindObjectsOfType<Player>();
+        Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
+        Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
+        Debug.Log("MyPlayer : " + myPlayer.pathBuffer.Count);
         int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
                         players[0].pathBuffer.Count : players[1].pathBuffer.Count;
         for (int j = 0; j < bigger; j++)
         {
             Index moveIndex;
             Index moveIndex1, moveIndex2;
+
             if (players[0].pathBuffer.Count != 0 && players[1].pathBuffer.Count != 0)
             {
                 moveIndex1 = players[0].pathBuffer[j];
                 moveIndex2 = players[1].pathBuffer[j];
+
+                // 서로 이동할 경로가 겹치는지 확인
+                if(moveIndex1.Equals(moveIndex2))
+                {
+                    // 충돌 애니매이션 재생
+                    Debug.Log("충돌 모든 이동 중지");
+                    break;
+                }
+
+                // 충돌 확인
                 if (moveIndex1.row >= 0 && moveIndex2.row >= 0)
                 {
                     // 충돌 타일은 기존 색 그대로 
                     SetCrashTile(moveIndex1, moveIndex2);
                 }
             }
+
+
+            // 움직이기
             foreach (Player p in players)
             {
                 // buffer가 비어있으면 pass
@@ -490,8 +518,62 @@ public class GameManager : MonoBehaviourPunCallbacks
                     board[moveIndex.row, moveIndex.col].changeColor(2);
                 }
             }
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(1f); //한칸 이동
+            
+            // ---서로 겹치는지 확인 && 겹치면 장애물 설치한 player가 짐
+            if(players[0].currentIndex.row == players[1].currentIndex.row)
+            {
+                Debug.Log("Equals 함수 테스트: " + (players[0].currentIndex.Equals(players[1].currentIndex)));
+                Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
+                Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
+                foreach( Player p in players)
+                {
+                    // buffer가 비어있으면 장애물 선택
+                    if(p.pathBuffer.Count == 0)
+                    {
+                        isGameOver = true;
+                        p.isGameLose = true;
+                        Destroy(p.gameObject);
+                        // 이중 for 문 빠져나오기
+                        j = bigger;
+                        break;
+                    }                   
+                } 
+            }
+            // ---
+
+            // -- Index의 값의 부호가 서로 다르고 나의 현재 위치와 상대방의 현재 위치가 같으면 잡힘
+            if((players[0].pathBuffer[j].row*players[1].pathBuffer[j].row) < 0 &&
+                players[0].currentIndex.Equals(players[1].currentIndex))
+            {
+                Debug.Log("새로 만듬");
+                for(int i = 0; i < players.Length; i++)
+                {
+                    if(players[i].pathBuffer[j].row < 0)
+                    {
+                        if(players[i].photonView.IsMine) // local이 잡아 먹힘
+                        {
+                            Debug.Log("내가 잡아 먹힘");
+                        }
+                        else
+                        {
+                            Debug.Log("내가 잡아 먹음");
+                        }
+                        Destroy(players[i].gameObject);
+                        isGameOver = true;
+                        players[i].isGameLose = true;
+                        state = BattleState.Finish;
+                        isProcessing = false;
+                        yield break;
+                        // 이중 for 문 빠져나오기
+                        j = bigger;
+                        break;
+                    }
+                }
+            }
+            // --
         }
+        
         // 전부 이동하면 buffer 초기화
         foreach (Player p in players)
         {
@@ -500,7 +582,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         myPlayer.UpdateIndex();
 
         // 종료 조건 확인
-        if (++currentTurn > mainTurnNum)
+        if (++currentTurn > mainTurnNum || isGameOver)
             state = BattleState.Finish;
         else
         {
@@ -508,7 +590,6 @@ public class GameManager : MonoBehaviourPunCallbacks
             state = BattleState.Input;
         }
         isProcessing = false;
-        yield return null;
     }
 
     private void SetCrashTile(Index moveIndex1, Index moveIndex2)
@@ -537,6 +618,32 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **승패 확인
     IEnumerator Finish()
     {
+        // 잡혀서 죽는 경우
+        if(isGameOver)
+        {
+            Player[] players = FindObjectsOfType<Player>();
+            foreach(Player p in players)
+            {
+                if(p.isGameLose)
+                {
+                    if(p.photonView.IsMine)
+                    {
+                        Debug.Log("내가 짐");
+                    }
+                }
+                else
+                {
+                    if(p.photonView.IsMine)
+                    {
+                        Debug.Log("내가 이김");
+                    }
+                }
+            
+            }
+            yield break;
+        }
+        
+
         // * board를 탐색해서 player1과 player2의 영역 찾기
         int myTiles = 0; int opponentTiles = 0;
         for (int i = 0; i < boardRow; i++)

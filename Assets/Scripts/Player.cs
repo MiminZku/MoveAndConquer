@@ -14,9 +14,10 @@ public class Player : MonoBehaviourPun
     //private bool isObstacleSelected;
 
     public Tile[,] board;
-    [SerializeField] Index currentIndex;
+    public Index currentIndex;
     Index orgIndex;
     Vector3 orgPosition;
+    [HideInInspector] public bool isGameLose = false;
 
     public List<Index> pathBuffer = new List<Index>();
 
@@ -175,6 +176,7 @@ public class Player : MonoBehaviourPun
                     isMoveInput = false;
                     // network
                     PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+                    Debug.Log("엔터 누르고 buffer 수 : " + pathBuffer.Count);
                 }
             }
         }
@@ -302,14 +304,18 @@ public class Player : MonoBehaviourPun
         if(isMoveLeft) { board[currentIndex.row , currentIndex.col - 1].changeColor(mode); }
     }
 
+
     internal void TimeOver()
     {
         int dN = GameManager.Instance.diceNum;
         if (pathBuffer.Count < dN)
         {
-            for (int i = 0; i < dN - pathBuffer.Count; i++)
+            int bufferCount = pathBuffer.Count;
+            for (int i = 0; i < dN - bufferCount; i++)
             {
-                photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+                // photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+                // buffer에 값 넣어주기
+                pathBuffer.Add(new Index(-1, -1));
             }
         }
         isObstacleInput = false;
