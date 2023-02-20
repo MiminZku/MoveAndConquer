@@ -103,6 +103,10 @@ public class Player : MonoBehaviourPun
                 isObstacleInput = false;
                 target.isObstacle = true;
                 photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, target.tileIndex.row, target.tileIndex.col);
+                for (int i = 0; i < GameManager.Instance.diceNum; i++)
+                {
+                     photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+                }
                 PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
             }
         }
