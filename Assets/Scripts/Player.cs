@@ -235,6 +235,7 @@ public class Player : MonoBehaviourPun
                 if (Input.GetKeyDown(KeyCode.Return))   // 입력 완료
                 {
                     ConfirmInput();
+                    GameManager.Instance.inputButtons.SetActive(false);
                 }
             }
         }
