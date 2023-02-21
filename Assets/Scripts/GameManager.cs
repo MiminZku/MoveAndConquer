@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
     }
     private static GameManager instance;
+    UIManager uiMgr;
     // board 변수
     [SerializeField] GameObject tiles;
     public Tile[,] board;
@@ -99,6 +100,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         // 상태 초기화
         state = BattleState.Start;
         timeText.GetComponent<Text>().text = "" + maxTime;
+        // UI Manager 가져오기
+        uiMgr = UIManager.Instance;
     }
 
     private void SpanwPlayer()
@@ -242,7 +245,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         // dice 수를 표시하는 UI 만들기
         // *dice 수를 표시하는 UI를 받아와서 업데이트
         // NewGameMgr 의 변수 diceNum 이용
-        diceText.text = "Dice : " + diceNum.ToString();
+        diceText.text = " : " + diceNum.ToString();
     }
 
     // Time 줄어드는 함수 -> 사용 안함
@@ -385,12 +388,18 @@ public class GameManager : MonoBehaviourPunCallbacks
             //// network
             //PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
         }
-
+ 
         // 둘다 완성되지 않으면 대기
         while (!EveryPlayerReady())
         {
+            // 대기중인데 내 cp가 참이면 UI 띄우기
+            Hashtable cp = PhotonNetwork.LocalPlayer.CustomProperties;
+            if ((bool)cp["isInputDone"]) uiMgr.ShowWaitBar();
             yield return null;
         }
+        uiMgr.HideWaitBar();
+  
+
         // 시간이 초과되지 않아도 다 입력이 완료되면 time check 비활성화 
         yield return new WaitForSeconds(1.5f);
         if(EveryPlayerReady()) isTimeCheck = false;
@@ -626,7 +635,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **승패 확인
     IEnumerator Finish()
     {
-        // 잡혀서 죽는 경우
+        // 잡혀서 죽는 경우 -> 여기 UI 아직 안 만듬
         if(isGameOver)
         {
             Player[] players = FindObjectsOfType<Player>();
@@ -670,17 +679,26 @@ public class GameManager : MonoBehaviourPunCallbacks
         }
         Debug.Log(string.Format("내가 칠한 타일 수 : {0}", myTiles));
         Debug.Log(string.Format("상대가 칠한 타일 수 : {0}", opponentTiles));
-        // * 승패 UI 표시
+
+        // Game over 창 띄우기
+        uiMgr.showGameoverWindow();
+        // 포인트 update
+        uiMgr.BluePointUpdate(myTiles);
+        uiMgr.RedPointUpdate(opponentTiles);
+        // 승패 UI 표시
         if (myTiles > opponentTiles)
         {
-            Debug.Log("승리!!!");
+            uiMgr.ShowWinText();
+            Debug.Log("승리!!");
         }
         else if(myTiles < opponentTiles)
         {
+            uiMgr.ShowLoseText();
             Debug.Log("패배...");
         }
         else
         {
+            uiMgr.ShowDrawText();
             Debug.Log("무승부!");
         }
         yield break;
