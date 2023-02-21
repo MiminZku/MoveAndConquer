@@ -18,16 +18,17 @@ public struct Index
 public class Tile : MonoBehaviour
 {
     //flag
-    public bool isObstacle { get; set; } = false;
+    public bool isObstacleInput { get; set; } = false;
+    public bool isObstacleSet = false;
 
     [SerializeField] Material[] materials;
     MeshRenderer meshRenderer;
-    public enum TileColor { BASE, RED, BLUE };
+    public enum TileColor { BASE, BLUE, RED };
     public TileColor color = TileColor.BASE;
 
     //
     public Index tileIndex;
-
+    internal bool isCrash;
 
     // Start is called before the first frame update 
     void Start()
@@ -41,24 +42,33 @@ public class Tile : MonoBehaviour
 
     }
 
-    public void changeColor(int mode)
+    public void Flip(int mode)
     {
-        // √Êµπ ¿œæÓ≥™¥¬ tile ¿Ã∏È ªˆƒ• ∆–Ω∫
-        // if(isCrash) { return; }
+        // Ï∂©Îèå ÏùºÏñ¥ÎÇòÎäî tile Ïù¥Î©¥ ÏÉâÏπ† Ìå®Ïä§
+         if(isCrash) { return; }
+        if (isObstacleSet) return;
 
+        ChangeColor(mode);
+    }
+
+    public void ChangeColor(int mode)
+    {
         switch (mode)
         {
             case 0: // gray
                 meshRenderer.material = materials[0];
                 color = TileColor.BASE;
                 break;
-            case 1: // player1 (Red)
+            case 1: // player1 (Blue)
                 meshRenderer.material = materials[1];
+                color = TileColor.BLUE;
+                break;
+            case 2: // player2 (red)
+                meshRenderer.material = materials[2];
                 color = TileColor.RED;
                 break;
-            case 2: // player2 (blue)
-                meshRenderer.material = materials[2];
-                color = TileColor.BLUE;
+            case 3: // green
+                meshRenderer.material = materials[3];
                 break;
         }
     }

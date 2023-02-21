@@ -1,29 +1,55 @@
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
+using UnityEngine.UI;
+using static Tile;
+using static UnityEngine.GraphicsBuffer;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class Player : MonoBehaviourPun
 {
-    private bool isObstacleSelected;
+    //private bool isObstacleSelected;
 
     public Tile[,] board;
-    Index currentIndex;
+    public Index currentIndex;
+    Index orgIndex;
+    Vector3 orgPosition;
+    [HideInInspector] public bool isGameLose = false;
 
     public List<Index> pathBuffer = new List<Index>();
-
-
+    public List<TileColor> previousColors = new List<TileColor>();
 
     MeshRenderer meshRenderer;
     public Material player1Mat;
     public Material player2Mat;
 
+    Tile previousTarget;
+    Tile currentTarget;
+    TileColor previousColor;
 
-    // Start is called before the first frame update
+    public bool isObstacleInput; // ì…ë ¥ ê°€ëŠ¥ flag
+    private bool isMoveInput;
+    private int moveCount;
+    
+    // ì¹ í•˜ê¸° ìœ„í•œ flags
+    bool isMoveRight = true;
+    bool isMoveLeft = true;
+    bool isMoveUp = true;
+    bool isMoveDown = true;
+
+    Button resetButton;
+    Button confirmButton;
+
     void Start()
     {
+        resetButton = GameManager.Instance.inputButtons.transform.GetChild(0).GetComponent<Button>();
+        confirmButton = GameManager.Instance.inputButtons.transform.GetChild(1).GetComponent<Button>();
+        isMoveInput = false;
+        isObstacleInput = false;
         board = GameManager.Instance.board;
         PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", false } });
         meshRenderer = GetComponent<MeshRenderer>();
@@ -35,82 +61,409 @@ public class Player : MonoBehaviourPun
         {
             meshRenderer.material = player2Mat;
         }
-    }
 
+        if (transform.position == GameManager.Instance.spawnPositions[0].position)
+        {
+            photonView.RPC("SetIndex", RpcTarget.AllBuffered, 6, 2);
+        }
+        else
+        {
+            photonView.RPC("SetIndex", RpcTarget.AllBuffered, 2, 2);
+        }
+        orgIndex = currentIndex;
+        orgPosition = transform.position;
+    }
+    [PunRPC]
+    void SetIndex(int row, int col)
+    {
+        currentIndex.row = row;
+        currentIndex.col = col;
+    }
     // Update is called once per frame
     void Update()
     {
+        // Debug.Log("isMoveInput flag : " + isMoveInput);
+        if (!photonView.IsMine) return;
+        if (isObstacleInput)
+        {
+            if (Input.GetMouseButtonDown(0)) // *** ê°ì²´ hit í•¨ìˆ˜ ì¶”ê°€
+            {
+                if (currentTarget != null)
+                {
+                    previousTarget = currentTarget;
+                }
+                int layerMask = -1 - (1 << LayerMask.NameToLayer("Player"));
+                RaycastHit hit;
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity, layerMask))
+                {
+                    currentTarget = hit.collider.gameObject.GetComponent<Tile>();
+                }
 
+                if (IsPlayerOnTile(currentTarget))
+                {
+                    if(previousTarget != null)
+                    {
+                        currentTarget = previousTarget;
+                    }
+                    Debug.Log("í”Œë ˆì´ì–´ê°€ ìˆëŠ” íƒ€ì¼ ì„ íƒ ë¶ˆê°€");
+                }
+                else if (currentTarget.isObstacleSet)
+                {
+                    if (previousTarget != null)
+                    {
+                        currentTarget = previousTarget;
+                    }
+                    Debug.Log("ì´ë¯¸ ì¥ì• ë¬¼ ì„¤ì¹˜ëœ íƒ€ì¼ ì„ íƒ ë¶ˆê°€");
+                }
+                else
+                {
+                    if(previousTarget != null) previousTarget.ChangeColor((int)previousColor);
+                    previousColor = currentTarget.color;
+                    currentTarget.ChangeColor(3);
+                    resetButton.interactable = true;
+                    confirmButton.interactable = true;
+
+                    //isObstacleInput = false;
+                    //target.isObstacleInput = true;
+                    //photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, target.tileIndex.row, target.tileIndex.col);
+                    //for (int i = 0; i < GameManager.Instance.diceNum; i++)
+                    //{
+                    //    photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+                    //}
+                    //PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+                }
+            }
+        }
+        if (isMoveInput)
+        {
+            if(moveCount < GameManager.Instance.diceNum)
+            {
+                bool input = false;
+                if (Input.GetKeyDown(KeyCode.W))
+                {
+                    if (currentIndex.row == 0)
+                    {
+                        Debug.Log("Way Blocked!");
+                    }
+                    else
+                    {
+                        currentIndex.row -= 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.row += 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
+                        input = true;
+                    }
+
+                }
+                else if (Input.GetKeyDown(KeyCode.A))
+                {
+                    if (currentIndex.col == 0)
+                    {
+                        Debug.Log("Way Blocked!");
+                    }
+                    else
+                    {
+                        currentIndex.col -= 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.col += 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
+                        input = true;
+                    }
+
+                }
+                else if (Input.GetKeyDown(KeyCode.S))
+                {
+                    if (currentIndex.row == 8)
+                    {
+                        Debug.Log("Way Blocked!");
+                    }
+                    else
+                    {
+                        currentIndex.row += 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.row -= 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
+                        input = true;
+                    }
+
+                }
+                else if (Input.GetKeyDown(KeyCode.D))
+                {
+                    if (currentIndex.col == 4)
+                    {
+                        Debug.Log("Way Blocked!");
+                    }
+                    else
+                    {
+                        currentIndex.col += 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.col -= 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
+                        input = true;
+                    }
+                }
+
+                if (input)
+                {
+                    previousColors.Add(board[currentIndex.row, currentIndex.col].color);
+                    board[currentIndex.row, currentIndex.col].ChangeColor(3);
+                    moveCount++;
+                    resetButton.interactable = true;
+                    photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
+                }
+            }
+            else    // diceNum ë§Œí¼ ì…ë ¥ì„ ë‹¤ ë°›ì•˜ì„ ê²½ìš°
+            {
+                confirmButton.interactable = true;
+                if (Input.GetKeyDown(KeyCode.Return))   // ì…ë ¥ ì™„ë£Œ
+                {
+                    ConfirmInput();
+                    GameManager.Instance.inputButtons.SetActive(false);
+                }
+            }
+        }
     }
 
-    public void OnObstacleButtonClick()
+    private bool IsPlayerOnTile(Tile target)
     {
-        isObstacleSelected = true;
+        Player[] players = FindObjectsOfType<Player>();
+        foreach(Player p in players)
+        {
+            if(p.currentIndex.Equals(target.tileIndex)) { return true; }
+        }
+        return false;
     }
 
-    public void OnMoveButtonClick()
-    {
-        isObstacleSelected = false;
-    }
-
-
-    // *Å¬¸¯À¸·Î ÀÔ·Â¹Ş°í Å¬¸¯ÇÑ Å¬¸¯ÇÑ Å¸ÀÏÀÇ isObstacle flag¸¦ º¯°æÇØÁÜ
+    // *í´ë¦­ìœ¼ë¡œ ì…ë ¥ë°›ê³  í´ë¦­í•œ í´ë¦­í•œ íƒ€ì¼ì˜ isObstacle flagë¥¼ ë³€ê²½í•´ì¤Œ
     public void InputObstacle()
     {
-        // flag ¸¦ ÀÌ ÇÔ¼ö¿¡¼­ ¹Ù²ãÁÖ°í Update() ¿¡¼­ ÀÔ·ÂÀ» ¹Ş±â
-        // flag´Â ÀÔ·ÂÀ» ¹ŞÀ» ¼ö ÀÕ´Â »óÅÂ¸¦ ³ªÅ¸³¿
-        // ¾Æ·¡ ÄÚµå°¡ ²À ÀÌ ÇÔ¼ö ¾È¿¡ ÀÖ¾î¾ßÇÏ´Â °Å´Â ¾Æ´Ô. update() ¹®¿¡¼­µµ »ç¿ë °¡´É.
+        Debug.Log("InputObstacle");
+        isObstacleInput = true;
+        // flag ë¥¼ ì´ í•¨ìˆ˜ì—ì„œ ë°”ê¿”ì£¼ê³  Update() ì—ì„œ ì…ë ¥ì„ ë°›ê¸°
+        // flagëŠ” ì…ë ¥ì„ ë°›ì„ ìˆ˜ ì‡ëŠ” ìƒíƒœë¥¼ ë‚˜íƒ€ëƒ„
+        // ì•„ë˜ ì½”ë“œê°€ ê¼­ ì´ í•¨ìˆ˜ ì•ˆì— ìˆì–´ì•¼í•˜ëŠ” ê±°ëŠ” ì•„ë‹˜. update() ë¬¸ì—ì„œë„ ì‚¬ìš© ê°€ëŠ¥.
 
-        // *Å¬¸¯ÇÑ Å¸ÀÏÀÇ row¿Í colÀ» °¡Á®¿Í¼­ tileRow, tileCol º¯¼ö¿¡ ´ëÀÔ
-        // tile Å¬·¡½º¿¡ tileIndex ÀÌ¿ë
-        int tileRow = 3;
-        int tileCol = 3;
-        // *NewGameMgr¿¡¼­ timeÀÌ ÃÊ°úµÇ¸é ÀÔ·Â¹Ş±â ÁßÁö
-        // NewGameMgrÀÇ º¯¼ö currentTime, maxTime ÀÌ¿ë
+        // *í´ë¦­í•œ íƒ€ì¼ì˜ rowì™€ colì„ ê°€ì ¸ì™€ì„œ tileRow, tileCol ë³€ìˆ˜ì— ëŒ€ì…
+        // tile í´ë˜ìŠ¤ì— tileIndex ì´ìš©
+        // *NewGameMgrì—ì„œ timeì´ ì´ˆê³¼ë˜ë©´ ì…ë ¥ë°›ê¸° ì¤‘ì§€
+        // NewGameMgrì˜ ë³€ìˆ˜ currentTime, maxTime ì´ìš©
 
         // network 
-        // iaObastacle flag º¯°æÇØÁÖ´Â ÄÚµå
-        // ÇÊ¿ä¿¡ µû¶ó À§Ä¡ ÀÌµ¿
-        PhotonView pv = gameObject.GetPhotonView();
-        pv.RPC("SetObstacleFlag", RpcTarget.AllBuffered, tileRow, tileCol);
-        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+        // iaObastacle flag ë³€ê²½í•´ì£¼ëŠ” ì½”ë“œ
+        // í•„ìš”ì— ë”°ë¼ ìœ„ì¹˜ ì´ë™
     }
 
-    // *ÀÌµ¿À» ÀÔ·Â¹Ş°í ÀÌµ¿ °æ·Î¸¦ NewPlayer Å¬·¡½º°¡ °¡Áö°í ÀÖ´Â pathBuffer º¯¼ö¿¡ ÀúÀå.
+    // *ì´ë™ì„ ì…ë ¥ë°›ê³  ì´ë™ ê²½ë¡œë¥¼ NewPlayer í´ë˜ìŠ¤ê°€ ê°€ì§€ê³  ìˆëŠ” pathBuffer ë³€ìˆ˜ì— ì €ì¥.
     public void InputMove(int diceNum)
     {
-        // flag ¸¦ ÀÌ ÇÔ¼ö¿¡¼­ ¹Ù²ãÁÖ°í Update() ¿¡¼­ ÀÔ·ÂÀ» ¹Ş±â
-        // flag´Â ÀÔ·ÂÀ» ¹ŞÀ» ¼ö ÀÕ´Â »óÅÂ¸¦ ³ªÅ¸³¿
-        // ÀÌµ¿ ÀÔ·Â¹Ş±â´Â InputObstacle() ÇÔ¼ö¿Í ¸¶Âù°¡Áö·Î Update() ¹®¿¡¼­ ¹Ş±â
-        // ¸¶Âù°¡Áö·Î flag ÇÊ¿ä
-        // ÀÔ·Â¹ŞÀ¸¸é¼­ player ¿ÀºêÁ§Æ®(Ã¼½º ¸») ÀÌµ¿ ÇÊ¿ä
-        // ¸Å°³º¯¼ö·Î ¹ŞÀº diceNum ¸¸Å­ ÀÔ·Â ¹Ş±â
-        // ¸ğµç °ªÀ» ´Ù ÀÔ·Â¹ŞÀ¸¸é ¿ø·¡ À§Ä¡·Î ÀÌµ¿.
+        Debug.Log("InputMove");
+        previousColors.Clear();
+        isMoveInput = true;
+        moveCount = 0;
+        orgIndex = currentIndex;
+        orgPosition = transform.position;
+        // flag ë¥¼ ì´ í•¨ìˆ˜ì—ì„œ ë°”ê¿”ì£¼ê³  Update() ì—ì„œ ì…ë ¥ì„ ë°›ê¸°
+        // flagëŠ” ì…ë ¥ì„ ë°›ì„ ìˆ˜ ì‡ëŠ” ìƒíƒœë¥¼ ë‚˜íƒ€ëƒ„
+        // ì´ë™ ì…ë ¥ë°›ê¸°ëŠ” InputObstacle() í•¨ìˆ˜ì™€ ë§ˆì°¬ê°€ì§€ë¡œ Update() ë¬¸ì—ì„œ ë°›ê¸°
+        // ë§ˆì°¬ê°€ì§€ë¡œ flag í•„ìš”
+        // ì…ë ¥ë°›ìœ¼ë©´ì„œ player ì˜¤ë¸Œì íŠ¸(ì²´ìŠ¤ ë§) ì´ë™ í•„ìš”
+        // ë§¤ê°œë³€ìˆ˜ë¡œ ë°›ì€ diceNum ë§Œí¼ ì…ë ¥ ë°›ê¸°
+        // ëª¨ë“  ê°’ì„ ë‹¤ ì…ë ¥ë°›ìœ¼ë©´ ì›ë˜ ìœ„ì¹˜ë¡œ ì´ë™.
 
-        int tileRow = 3;
-        int tileCol = 3;
-        // *NewGameMgr¿¡¼­ timeÀÌ ÃÊ°úµÇ¸é ÀÔ·Â¹Ş±â ÁßÁö
-        // NewGameMgrÀÇ º¯¼ö currentTime, maxTime ÀÌ¿ë
+        // *NewGameMgrì—ì„œ timeì´ ì´ˆê³¼ë˜ë©´ ì…ë ¥ë°›ê¸° ì¤‘ì§€
+        // NewGameMgrì˜ ë³€ìˆ˜ currentTime, maxTime ì´ìš©
+    }
 
+    // RPC í•¨ìˆ˜
+    [PunRPC]
+    void SetObstacleFlag(int indexRow, int indexCol)
+    {
+        //flag ìƒˆìš°ê¸°
+        board[indexRow, indexCol].isObstacleInput = true;
+    }
+    [PunRPC]
+    void AddPathRPC(int row, int col)
+    {
+        Index i = new Index(row, col);
+        pathBuffer.Add(i);
+    }
+
+    internal void SyncDiceNum()
+    {
+        if (!PhotonNetwork.IsMasterClient) return;
+        photonView.RPC("SyncDiceNumRPC", RpcTarget.AllBuffered, GameManager.Instance.diceNum);
+    }
+    [PunRPC]
+    void SyncDiceNumRPC(int diceNum)
+    {
+        GameManager.Instance.diceNum = diceNum;
+    }
+
+    // í˜„ì¬ ìœ„ì¹˜ì—ì„œ ì´ë™í•  ìˆ˜ ìˆëŠ” ìœ„ì¹˜ë“¤ flag ì„¸íŒ…
+    public void SetPathFlag()
+    {
+        int maxRow = GameManager.Instance.boardRow - 1;
+        int maxCol = GameManager.Instance.boardCol - 1;
+
+        
+        if(currentIndex.row == 0) { isMoveUp = false; } // ìœ„ë¡œ ì´ë™ ë¶ˆê°€
+        else { isMoveUp = true; }
+
+        if(currentIndex.row == maxRow) { isMoveDown = false; } // ì•„ë˜ë¡œ ì´ë™ ë¶ˆê°€
+        else { isMoveDown = true; }
+
+        if(currentIndex.col == 0){ isMoveLeft = false; } // ì™¼ìª½ìœ¼ë¡œ ì´ë™ ë¶ˆê°€
+        else { isMoveLeft = true;}
+
+        if(currentIndex.col == maxCol){ isMoveRight = false;} // ì˜¤ë¥¸ìª½ìœ¼ë¡œ ì´ë™ ë¶ˆê°€
+        else { isMoveRight = true; }
+    }
+    // ì´ë™ í•¨ìˆ˜
+    public void Move(Index moveIndex)
+    {
+
+        currentIndex = moveIndex;
+
+        Tile moveTile = board[currentIndex.row, currentIndex.col];
+        float moveX = moveTile.transform.position.x;
+        float moveZ = moveTile.transform.position.z;
+        transform.position = new Vector3(moveX, transform.position.y, moveZ);
+        orgIndex = currentIndex;
+        // ì›€ì§ì´ë©´ì„œ íƒ€ì¼ ë’¤ì§‘ê¸° 
+        // flagë¥¼ í†µí•´ì„œ tile ë’¤ì§‘ê¸° tagë¥¼ í†µí•´ì„œ ìƒ‰ê¹” ì§€ì •
+        // tagë¡œ player ì§€ì •
+        int mode;
+        if(photonView.IsMine) { mode = 1; } // Blue ìƒ‰ 
+        else { mode = 2; } //Red ìƒ‰
+        // check flag
+        SetPathFlag();
+        // change color
+        board[currentIndex.row , currentIndex.col].Flip(mode);
+        if(isMoveUp) { board[currentIndex.row - 1 , currentIndex.col].Flip(mode); }
+        if(isMoveDown) { board[currentIndex.row + 1 , currentIndex.col].Flip(mode); }
+        if(isMoveRight) { board[currentIndex.row , currentIndex.col + 1].Flip(mode); }
+        if(isMoveLeft) { board[currentIndex.row , currentIndex.col - 1].Flip(mode); }
+    }
+
+
+    internal void TimeOver()
+    {
+        StartCoroutine(TimeOverCoroutine());
+    }
+
+    IEnumerator TimeOverCoroutine()
+    {
+        yield return new WaitForSeconds(2f);
+        if (photonView.IsMine && isMoveInput)
+        {
+            //previousColors.Clear();
+            currentIndex = orgIndex;
+            transform.position = orgPosition;
+        }
+            int dN = GameManager.Instance.diceNum;
+        if (pathBuffer.Count < dN)
+        {
+            int bufferCount = dN - pathBuffer.Count;
+            for (int i = 0; i < bufferCount; i++)
+            {
+                // photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+                // bufferì— ê°’ ë„£ì–´ì£¼ê¸°
+                pathBuffer.Add(new Index(-1, -1));
+            }
+        }
+        isMoveInput = false;
+        isObstacleInput = false;
+        if(currentTarget != null)
+        {
+            currentTarget.ChangeColor((int)previousColor);
+            currentTarget.isObstacleInput = true;
+            photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, currentTarget.tileIndex.row, currentTarget.tileIndex.col);
+        }
 
         // network
-        PhotonView pv = gameObject.GetPhotonView();
-        pv.RPC("SetObstacleFlag", RpcTarget.AllBuffered, tileRow, tileCol);
         PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
     }
 
-    // RPC ÇÔ¼ö
-    [PunRPC]
-    public void SetObstacleFlag(int indexRow, int indexCol)
+    public void RestoreTileColor()
     {
-        //flag »õ¿ì±â
-        board[indexRow, indexCol].isObstacle = true;
-    }
-    [PunRPC]
-    public void SetObstacle(int indexRow, int indexCol)
-    {
-        //
+        for (int i = 0; i < previousColors.Count; i++)
+        {
+            board[pathBuffer[i].row, pathBuffer[i].col].ChangeColor((int)previousColors[i]);
+        }
     }
 
+    internal void UpdateIndex()
+    {
+        photonView.RPC("SetIndex", RpcTarget.AllBuffered,currentIndex.row, currentIndex.col);
+    }
+
+    public void ResetInput()
+    {
+        if (!photonView.IsMine) return;
+        if(isObstacleInput)
+        {
+            currentTarget.ChangeColor((int)previousColor);
+            currentTarget = null;
+        }
+        else if(isMoveInput)
+        {
+            RestoreTileColor();
+            photonView.RPC("ClearPathBufferRPC",RpcTarget.AllBuffered);
+            previousColors.Clear();
+            moveCount = 0;
+            currentIndex = orgIndex;
+            transform.position = orgPosition;
+        }
+        resetButton.interactable = false;
+        confirmButton.interactable = false;
+    }
+    [PunRPC]
+    void ClearPathBufferRPC()
+    {
+        pathBuffer.Clear();
+    }
+
+    public void ConfirmInput()
+    {
+        if (!photonView.IsMine) return;
+        if (isObstacleInput)
+        {
+            currentTarget.ChangeColor((int)previousColor);
+            isObstacleInput = false;
+            currentTarget.isObstacleInput = true;
+            photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, currentTarget.tileIndex.row, currentTarget.tileIndex.col);
+            for (int i = 0; i < GameManager.Instance.diceNum; i++)
+            {
+                photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
+            }
+        }
+        else if(isMoveInput)
+        {
+            //previousColors.Clear();
+            currentIndex = orgIndex;
+            transform.position = orgPosition;
+            isMoveInput = false;
+        }
+        // network
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
+        Debug.Log("ì—”í„° ëˆ„ë¥´ê³  buffer ìˆ˜ : " + pathBuffer.Count);
+    }
 }
 
