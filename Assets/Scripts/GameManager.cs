@@ -161,9 +161,6 @@ public class GameManager : MonoBehaviourPunCallbacks
                 p.TimeOver();
                 Debug.Log("Time check에서 pathbuffer : " + p.pathBuffer.Count);
             }
-
-            // network
-            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
             // 시간 체크 flag false로 설정
             isTimeCheck = false;
         }
@@ -420,8 +417,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
             for (int j = 0; j < boardCol; j++)
             {
-                if (board[i, j].isObstacle == true)
-                    Instantiate(obstaclePrefab, board[i, j].transform.position, board[i, j].transform.rotation);
+                if (board[i, j].isObstacleInput == true && board[i,j].isObstacleSet == false)
+                {
+                    Vector3 spawnPos = board[i, j].transform.position;
+                    spawnPos.y = 15;
+                    Instantiate(obstaclePrefab, spawnPos, board[i, j].transform.rotation);
+                    board[i, j].GetComponent<Tile>().isObstacleSet = true;
+                }
             }
         }
 
@@ -450,9 +452,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
         Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
         Debug.Log("MyPlayer : " + myPlayer.pathBuffer.Count);
-        int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
-                        players[0].pathBuffer.Count : players[1].pathBuffer.Count;
-        for (int j = 0; j < bigger; j++)
+        //int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
+        //                players[0].pathBuffer.Count : players[1].pathBuffer.Count;
+        for (int j = 0; j < diceNum; j++)
         {
             Index moveIndex;
             Index moveIndex1, moveIndex2;
@@ -470,7 +472,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                     break;
                 }
 
-                // 충돌 확인
+                //// 충돌 확인
                 if (moveIndex1.row >= 0 && moveIndex2.row >= 0)
                 {
                     // 충돌 타일은 기존 색 그대로 
@@ -483,14 +485,18 @@ public class GameManager : MonoBehaviourPunCallbacks
             foreach (Player p in players)
             {
                 // buffer가 비어있으면 pass
-                if (p.pathBuffer.Count == 0) continue;
+                //if (p.pathBuffer.Count == 0) continue;
 
                 moveIndex = p.pathBuffer[j];
                 if (moveIndex.row < 0) continue;
                 // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
-                if (board[moveIndex.row, moveIndex.col].isObstacle)
+                if (board[moveIndex.row, moveIndex.col].isObstacleInput)
                 {
-                    p.pathBuffer.Clear();
+                    //p.pathBuffer.Clear();
+                    for(int k = j; k < diceNum; k++)
+                    {
+                        p.pathBuffer[k] = new Index(-1, -1);
+                    }
                     continue;
                 }
                 // 이동하면서 타일 색칠
@@ -523,25 +529,25 @@ public class GameManager : MonoBehaviourPunCallbacks
             yield return new WaitForSeconds(1f); //한칸 이동
             
             // ---서로 겹치는지 확인 && 겹치면 장애물 설치한 player가 짐
-            if(players[0].currentIndex.row == players[1].currentIndex.row)
-            {
-                Debug.Log("Equals 함수 테스트: " + (players[0].currentIndex.Equals(players[1].currentIndex)));
-                Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
-                Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
-                foreach( Player p in players)
-                {
-                    // buffer가 비어있으면 장애물 선택
-                    if(p.pathBuffer.Count == 0)
-                    {
-                        isGameOver = true;
-                        p.isGameLose = true;
-                        Destroy(p.gameObject);
-                        // 이중 for 문 빠져나오기
-                        j = bigger;
-                        break;
-                    }                   
-                } 
-            }
+            //if(players[0].currentIndex.Equals(players[1].currentIndex))
+            //{
+            //    Debug.Log("Equals 함수 테스트: " + (players[0].currentIndex.Equals(players[1].currentIndex)));
+            //    Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
+            //    Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
+            //    foreach( Player p in players)
+            //    {
+            //        // buffer가 비어있으면 장애물 선택
+            //        if(p.pathBuffer.Count == 0)
+            //        {
+            //            isGameOver = true;
+            //            p.isGameLose = true;
+            //            Destroy(p.gameObject);
+            //            // 이중 for 문 빠져나오기
+            //            j = bigger;
+            //            break;
+            //        }                   
+            //    } 
+            //}
             // ---
 
             // -- Index의 값의 부호가 서로 다르고 나의 현재 위치와 상대방의 현재 위치가 같으면 잡힘
@@ -568,8 +574,8 @@ public class GameManager : MonoBehaviourPunCallbacks
                         isProcessing = false;
                         yield break;
                         // 이중 for 문 빠져나오기
-                        j = bigger;
-                        break;
+                        //j = bigger;
+                        //break;
                     }
                 }
             }

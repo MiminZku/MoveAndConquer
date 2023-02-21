@@ -1668,7 +1668,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Surrender
+  m_Text: Lobby
 --- !u!222 &782628378
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1824,7 +1824,7 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 1
+  orthographic: 0
   orthographic size: 7.5
   m_Depth: -1
   m_CullingMask:
@@ -2018,7 +2018,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 5007558601542243069, guid: 484589ae8518845498ac57c16e0582e0, type: 3}
   currentTime: 0
   timeText: {fileID: 1423059496}
-  obstaclePrefab: {fileID: 4177059918518949826, guid: d66b51a4ea3e47c489709eef00723494, type: 3}
+  obstaclePrefab: {fileID: 8833043005383707017, guid: 831fc42a2903f6c4f991669d3d204b29, type: 3}
   inputObstacleButton: {fileID: 1711964922}
   inputMoveButton: {fileID: 1561163011}
   diceText: {fileID: 1656876576}

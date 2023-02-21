@@ -94,14 +94,14 @@ public class Player : MonoBehaviourPun
                 // 플레이어가 존재하는 타일은 클릭 안되게
                 // 조건에 있는 함수 미완성 상태
             }
-            else if (target.isObstacle)
+            else if (target.isObstacleSet)
             {
                 Debug.Log("이미 장애물 설치된 타일 선택 불가");
             }
             else
             {
                 isObstacleInput = false;
-                target.isObstacle = true;
+                target.isObstacleInput = true;
                 photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, target.tileIndex.row, target.tileIndex.col);
                 for (int i = 0; i < GameManager.Instance.diceNum; i++)
                 {
@@ -122,8 +122,14 @@ public class Player : MonoBehaviourPun
                     }
                     else
                     {
-                        gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
                         currentIndex.row -= 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.row += 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
                         photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
                         moveCount++;
                     }
@@ -137,8 +143,14 @@ public class Player : MonoBehaviourPun
                     }
                     else
                     {
-                        gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
                         currentIndex.col -= 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.col += 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
                         photonView.RPC("AddPathRPC",RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
                         moveCount++;
                     }
@@ -152,8 +164,14 @@ public class Player : MonoBehaviourPun
                     }
                     else
                     {
-                        gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
                         currentIndex.row += 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.row -= 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
                         photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
                         moveCount++;
                     }
@@ -167,8 +185,14 @@ public class Player : MonoBehaviourPun
                     }
                     else
                     {
-                        gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
                         currentIndex.col += 1;
+                        if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                        {
+                            Debug.Log("Way Blocked!");
+                            currentIndex.col -= 1;
+                            return;
+                        }
+                        gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
                         photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
                         moveCount++;
                     }
@@ -245,7 +269,7 @@ public class Player : MonoBehaviourPun
     void SetObstacleFlag(int indexRow, int indexCol)
     {
         //flag 새우기
-        board[indexRow, indexCol].isObstacle = true;
+        board[indexRow, indexCol].isObstacleInput = true;
     }
     [PunRPC]
     void AddPathRPC(int row, int col)
@@ -315,11 +339,17 @@ public class Player : MonoBehaviourPun
 
     internal void TimeOver()
     {
+        StartCoroutine(TimeOverCoroutine());
+    }
+
+    IEnumerator TimeOverCoroutine()
+    {
+        yield return new WaitForSeconds(2f);
         int dN = GameManager.Instance.diceNum;
         if (pathBuffer.Count < dN)
         {
-            int bufferCount = pathBuffer.Count;
-            for (int i = 0; i < dN - bufferCount; i++)
+            int bufferCount = dN - pathBuffer.Count;
+            for (int i = 0; i < bufferCount; i++)
             {
                 // photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, -1, -1);
                 // buffer에 값 넣어주기
@@ -327,6 +357,9 @@ public class Player : MonoBehaviourPun
             }
         }
         isObstacleInput = false;
+
+        // network
+        PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
     }
 
     internal void UpdateIndex()

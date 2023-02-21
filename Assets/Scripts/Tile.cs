@@ -18,7 +18,7 @@ public struct Index
 public class Tile : MonoBehaviour
 {
     //flag
-    public bool isObstacle { get; set; } = false;
+    public bool isObstacleInput { get; set; } = false;
 
     [SerializeField] Material[] materials;
     MeshRenderer meshRenderer;
@@ -28,6 +28,7 @@ public class Tile : MonoBehaviour
     //
     public Index tileIndex;
     internal bool isCrash;
+    public bool isObstacleSet = false;
 
     // Start is called before the first frame update 
     void Start()
@@ -45,7 +46,7 @@ public class Tile : MonoBehaviour
     {
         // 충돌 일어나는 tile 이면 색칠 패스
          if(isCrash) { return; }
-        if (isObstacle) return;
+        if (isObstacleInput) return;
 
         switch (mode)
         {
