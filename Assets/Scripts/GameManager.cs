@@ -73,6 +73,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject obstaclePrefab;
     [SerializeField] GameObject inputObstacleButton;
     [SerializeField] GameObject inputMoveButton;
+    public GameObject inputButtons;
     [SerializeField] Text diceText;
     [SerializeField] Text turnText;
     [SerializeField] Text roomNameText;
@@ -314,6 +315,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         isObstacleSelected = true;
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
+        inputButtons.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
@@ -327,6 +329,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         isObstacleSelected = false;
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
+        inputButtons.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
@@ -408,6 +411,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         state = BattleState.SetObstacle;
         isProcessing = false;
+        inputButtons.SetActive(false);
     }
 
     private void ChangeTurnUI()
@@ -456,7 +460,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *이동시 board의 tile에 장애물이 설치되어 있으면 해당 이동 불가
         // 잡기 시스템 필요 -> 일단 지금은 구현 안하는 걸로 (네트워크 부분이 들어가서 얘기해봐야함)
         // 모든 player move buffer를 바탕으로 move 
-
+        
+        myPlayer.RestoreTileColor();
         Player[] players = FindObjectsOfType<Player>();
         Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
         Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
@@ -468,7 +473,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             Index moveIndex;
             Index moveIndex1, moveIndex2;
 
-            if (players[0].pathBuffer.Count != 0 && players[1].pathBuffer.Count != 0)
+            if (players[0].pathBuffer[j].row >= 0 && players[1].pathBuffer[j].row >= 0)
             {
                 moveIndex1 = players[0].pathBuffer[j];
                 moveIndex2 = players[1].pathBuffer[j];
@@ -528,11 +533,11 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if (moveIndex.row < 0) continue;
                 if (p.photonView.IsMine)
                 {
-                    board[moveIndex.row, moveIndex.col].changeColor(1);
+                    board[moveIndex.row, moveIndex.col].Flip(1);
                 }
                 else
                 {
-                    board[moveIndex.row, moveIndex.col].changeColor(2);
+                    board[moveIndex.row, moveIndex.col].Flip(2);
                 }
             }
             yield return new WaitForSeconds(1f); //한칸 이동
@@ -595,6 +600,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         foreach (Player p in players)
         {
             p.pathBuffer.Clear();
+            p.previousColors.Clear();
         }
         myPlayer.UpdateIndex();
 
@@ -704,11 +710,21 @@ public class GameManager : MonoBehaviourPunCallbacks
         yield break;
     }
 
-    public void OnClickSurrenderButton()
+    public void OnClickLobbyButton()
     {
         PhotonNetwork.LeaveRoom();
         SceneManager.LoadScene(0);
     }
 
+    public void OnClickResetButton()
+    {
+        myPlayer.ResetInput();
+    }
+
+    public void OnClickConfirmButton()
+    {
+        myPlayer.ConfirmInput();
+        inputButtons.SetActive(false);
+    }
 
 }
