@@ -3385,6 +3385,7 @@ MonoBehaviour:
   - {fileID: 1147643928}
   playerPrefab: {fileID: 5007558601542243069, guid: 484589ae8518845498ac57c16e0582e0, type: 3}
   currentTime: 0
+  maxTime: 30
   timeText: {fileID: 1423059496}
   obstaclePrefab: {fileID: 8833043005383707017, guid: 831fc42a2903f6c4f991669d3d204b29, type: 3}
   inputObstacleButton: {fileID: 1711964922}
@@ -4563,7 +4564,7 @@ GameObject:
   - component: {fileID: 1572783913}
   - component: {fileID: 1572783912}
   - component: {fileID: 1572783911}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}

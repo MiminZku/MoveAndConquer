@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // Time 체크 변수 
     [HideInInspector] public float currentTime = 0;
     float startTime = 0;
-    [HideInInspector] float maxTime = 15f;
+    [SerializeField] float maxTime;
     bool isTimeCheck = false;
     [SerializeField] GameObject timeText;
 
