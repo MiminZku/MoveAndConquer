@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Windows;
 using static Tile;
 using static UnityEngine.GraphicsBuffer;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Input = UnityEngine.Input;
 
 public class Player : MonoBehaviourPun
 {
@@ -373,7 +375,6 @@ public class Player : MonoBehaviourPun
         yield return new WaitForSeconds(2f);
         if (photonView.IsMine && isMoveInput)
         {
-            //previousColors.Clear();
             currentIndex = orgIndex;
             transform.position = orgPosition;
         }
@@ -456,7 +457,7 @@ public class Player : MonoBehaviourPun
         }
         else if(isMoveInput)
         {
-            //previousColors.Clear();
+            transform.GetChild(0).gameObject.SetActive(false);
             currentIndex = orgIndex;
             transform.position = orgPosition;
             isMoveInput = false;
@@ -464,6 +465,86 @@ public class Player : MonoBehaviourPun
         // network
         PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "isInputDone", true } });
         Debug.Log("엔터 누르고 buffer 수 : " + pathBuffer.Count);
+    }
+
+    public void MoveInput(int buttonIndex)
+    {
+        switch(buttonIndex)
+        {
+            case 0:
+                if (currentIndex.row == 0)
+                {
+                    Debug.Log("Way Blocked!");
+                }
+                else
+                {
+                    currentIndex.row -= 1;
+                    if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                    {
+                        Debug.Log("Way Blocked!");
+                        currentIndex.row += 1;
+                        return;
+                    }
+                    gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
+                }
+                break;
+            case 1:
+                if (currentIndex.col == 0)
+                {
+                    Debug.Log("Way Blocked!");
+                }
+                else
+                {
+                    currentIndex.col -= 1;
+                    if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                    {
+                        Debug.Log("Way Blocked!");
+                        currentIndex.col += 1;
+                        return;
+                    }
+                    gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
+                }
+                    break;
+            case 2:
+                if (currentIndex.row == 8)
+                {
+                    Debug.Log("Way Blocked!");
+                }
+                else
+                {
+                    currentIndex.row += 1;
+                    if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                    {
+                        Debug.Log("Way Blocked!");
+                        currentIndex.row -= 1;
+                        return;
+                    }
+                    gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
+                }
+                break;
+            case 3:
+                if (currentIndex.col == 4)
+                {
+                    Debug.Log("Way Blocked!");
+                }
+                else
+                {
+                    currentIndex.col += 1;
+                    if (board[currentIndex.row, currentIndex.col].isObstacleSet)
+                    {
+                        Debug.Log("Way Blocked!");
+                        currentIndex.col -= 1;
+                        return;
+                    }
+                    gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
+                }
+                break;
+        }
+        previousColors.Add(board[currentIndex.row, currentIndex.col].color);
+        board[currentIndex.row, currentIndex.col].ChangeColor(3);
+        moveCount++;
+        resetButton.interactable = true;
+        photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
     }
 }
 

@@ -330,6 +330,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
         inputButtons.SetActive(true);
+        myPlayer.transform.GetChild(0).gameObject.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
@@ -412,6 +413,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         state = BattleState.SetObstacle;
         isProcessing = false;
         inputButtons.SetActive(false);
+        myPlayer.transform.GetChild(0).gameObject.SetActive(false);
     }
 
     private void ChangeTurnUI()
