@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// 여러 UI 들 관리 
+// 여러 UI들 관리 
 // Manager이므로 싱글톤
 
 public class UIManager : MonoBehaviour
@@ -28,6 +28,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject winText;
     [SerializeField] Text bluePointText;
     [SerializeField] Text redPointText;
+    [SerializeField] GameObject catchEndWindow;
+    [SerializeField] GameObject catchWinText;
+    [SerializeField] GameObject catchLoseText;
+
+    [SerializeField] GameObject diceToast;
+    [SerializeField] Text diceToastText;
+    [SerializeField] GameObject turnToast;
+    [SerializeField] Text turnToastText;
 
 
 
@@ -70,7 +78,54 @@ public class UIManager : MonoBehaviour
     {
         redPointText.text = "" + n;
     }
+    public void ShowCatchEndWindow()
+    {
+        catchEndWindow.SetActive(true);
+    }
+    public void ShowCatchWinText()
+    {
+        catchWinText.SetActive(true);
+    }
+
+    public void ShowCatchLoseText()
+    {
+        catchLoseText.SetActive(true);
+    }
+    public void ShowDiceToast()
+    {
+        diceToast.SetActive(true);
+    }
+    public void HideDiceToast()
+    {
+        diceToast.SetActive(false);
+    }
+    public void UpdateDiceToastText(int n)
+    {
+        diceToastText.text = ": " + n;
+    }
+
+    public void ShowTurnToast()
+    {
+        turnToast.SetActive(true);
+    }
+    public void HideTurnToast()
+    {
+        turnToast.SetActive(false);
+    }
+    public void UpdateTurnToastText(int n)
+    {
+        turnToastText.text = "Turn " + n;
+    }
+
 
     // 버튼 onclicklistener 만들기
+    public void OnClickCheckBtn()
+    {
+        gameoverWindow.SetActive(false);
+    }
+    public void OnClickCatchCkBtn()
+    {
+        catchEndWindow.SetActive(false);
+    }
     
 }

@@ -338,20 +338,34 @@ public class GameManager : MonoBehaviourPunCallbacks
     // coroutine
     IEnumerator InputProcess()
     {
+        // 현재 턴 잠깐 표시
+        yield return new WaitForSeconds(2f);
+        uiMgr.UpdateTurnToastText(currentTurn);
+        uiMgr.ShowTurnToast();
+        yield return new WaitForSeconds(1.5f);
+        uiMgr.HideTurnToast();
+        
+
         ChangeTurnUI();
         // 주사위 굴리기 -> master client만 호출
         RollingDice();  // delay 주기
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
         // 주사위 동기화
         SyscDiceNum();
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
-        // *주사위 눈 수 UI에 표시
+        // 주사위 눈 수 UI에 표시
         ChangeDiceUI();
+        // 주사위 toast 띄우기
+        uiMgr.UpdateDiceToastText(diceNum);
+        uiMgr.ShowDiceToast();
+        yield return new WaitForSeconds(1.5f);
+        uiMgr.HideDiceToast();
 
         // UI로 장애물 놓을건지 이동할건지 입력 받음
         // *장애물, 이동 선택 UI 표시
+        yield return new WaitForSeconds(1f);
         ShowSelectUI();
 
         // *시간 제한 함수(시간 count)
@@ -583,7 +597,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                         {
                             Debug.Log("내가 잡아 먹음");
                         }
-                        Destroy(players[i].gameObject);
+                        // players[i].gameObject.SetActive(false);
                         isGameOver = true;
                         players[i].isGameLose = true;
                         state = BattleState.Finish;
@@ -654,13 +668,18 @@ public class GameManager : MonoBehaviourPunCallbacks
                     if(p.photonView.IsMine)
                     {
                         Debug.Log("내가 짐");
+                        uiMgr.ShowCatchEndWindow();
+                        uiMgr.ShowCatchLoseText();
                     }
+                        p.gameObject.SetActive(false);
                 }
                 else
                 {
                     if(p.photonView.IsMine)
                     {
                         Debug.Log("내가 이김");
+                        uiMgr.ShowCatchEndWindow();
+                        uiMgr.ShowCatchWinText();
                     }
                 }
             
