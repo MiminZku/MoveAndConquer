@@ -44,8 +44,9 @@ public class Tile : MonoBehaviour
 
     public void Flip(int mode)
     {
+        if (FindObjectOfType<Player>().IsPlayerOnTile(this)) return;
         // 충돌 일어나는 tile 이면 색칠 패스
-        if(isCrash) { return; }
+        if (isCrash) { return; }
         if (isObstacleSet) return;
         tileAnimator.SetTrigger("Flip");
         ChangeColor(mode);

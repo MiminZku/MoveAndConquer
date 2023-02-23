@@ -248,7 +248,7 @@ public class Player : MonoBehaviourPun
         }
     }
 
-    private bool IsPlayerOnTile(Tile target)
+    public bool IsPlayerOnTile(Tile target)
     {
         Player[] players = FindObjectsOfType<Player>();
         foreach(Player p in players)
