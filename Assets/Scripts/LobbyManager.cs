@@ -19,6 +19,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     [SerializeField] Button goToMainButton;
     [SerializeField] Button playButton;
     [SerializeField] GameObject startScreen;
+    [SerializeField] GameObject ruleScreen;
 
     List<RoomInfo> myList = new List<RoomInfo>();
     int currentPage = 1, maxPage, multiple;
@@ -138,11 +139,17 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     public void OnClickGameRuleButton()
     {
-
+        startScreen.SetActive(false);
+        ruleScreen.SetActive(true);
     }
 
     public void OnClickPlayButton()
     {
         startScreen.SetActive(false);
+    }
+
+    public void OnClickRulePlayBtn()
+    {
+        ruleScreen.SetActive(false);
     }
 }
