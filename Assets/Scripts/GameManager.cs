@@ -6,6 +6,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting;
 
 public enum BattleState
 {
@@ -110,7 +111,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         var localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
         var spawnPosition = spawnPositions[localPlayerIndex % spawnPositions.Length];
         myPlayerObject = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition.position, spawnPosition.rotation);
-        myPlayer = myPlayerObject.GetComponent<Player>();
+        myPlayer = myPlayerObject.transform.GetChild(0).GetComponent<Player>();
     }
 
     void Update()
@@ -397,6 +398,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(1f);
         ShowSelectUI();
         StartCoroutine(uiMgr.BlinkChoiceHelperToast());
+        //myPlayer.parentTransform.rotation = Quaternion.Euler(0, 0, 0);
 
         // *시간 제한 함수(시간 count)
         // 시간 재거나 필요한 변수들 초기화
@@ -456,6 +458,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         state = BattleState.SetObstacle;
         isProcessing = false;
+        inputButtons.transform.GetChild(0).GetComponent<Button>().interactable = false;
+        inputButtons.transform.GetChild(1).GetComponent<Button>().interactable = false;
         inputButtons.SetActive(false);
         myPlayer.transform.GetChild(0).gameObject.SetActive(false);
     }
@@ -468,7 +472,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
-        Debug.Log("SetObstacle");
+        if (myPlayer.currentTarget != null)
+        {
+            myPlayer.currentTarget.ChangeColor((int)myPlayer.previousColor);
+        }
+            Debug.Log("SetObstacle");
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
@@ -496,6 +504,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **모든 플레이어 이동하면서 타일 색칠 
     IEnumerator AllMove()
     {
+
         Debug.Log("AllMove");
         // *myPlayer 멤버 변수를 이용해서 이동 + 색칠
         // 이동 + 색칠은 RPC 함수 안에서 구현해야할듯
@@ -513,8 +522,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
         Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
         Debug.Log("MyPlayer : " + myPlayer.pathBuffer.Count);
-        //int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
-        //                players[0].pathBuffer.Count : players[1].pathBuffer.Count;
         for (int j = 0; j < diceNum; j++)
         {
             Index moveIndex;
@@ -529,11 +536,17 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if(moveIndex1.Equals(moveIndex2))
                 {
                     // 충돌 애니매이션 재생
+                    foreach (Player p in players)
+                    {
+                        p.parentTransform.LookAt(GetLookPos(board[moveIndex1.row, moveIndex1.col]));
+                        p.playerAnimator.SetTrigger("Crash");
+                    }
                     Debug.Log("충돌 모든 이동 중지");
+                    yield return new WaitForSeconds(1);
                     break;
                 }
 
-                //// 충돌 확인
+                //// 타일 충돌 확인
                 if (moveIndex1.row >= 0 && moveIndex2.row >= 0)
                 {
                     // 충돌 타일은 기존 색 그대로 
@@ -553,15 +566,29 @@ public class GameManager : MonoBehaviourPunCallbacks
                 // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
                 if (board[moveIndex.row, moveIndex.col].isObstacleInput)
                 {
-                    //p.pathBuffer.Clear();
-                    for(int k = j; k < diceNum; k++)
+                    // 충돌 애니매이션 재생
+                    p.parentTransform.LookAt(GetLookPos(board[moveIndex.row, moveIndex.col]));
+                    p.playerAnimator.SetTrigger("Crash");
+                    Debug.Log("장애물 충돌 모든 이동 중지");
+                    // 뒤의 경로 삭제
+                    for (int k = j; k < diceNum; k++)
                     {
                         p.pathBuffer[k] = new Index(-1, -1);
                     }
                     continue;
                 }
                 // 이동하면서 타일 색칠
+                //p.parentTransform.rotation = Quaternion.Euler(0, 90, 0);
+                //yield return null;
                 p.Move(moveIndex);
+            }
+            yield return new WaitForSeconds(0.66f);
+            foreach(Player p in players)
+            {
+                moveIndex = p.pathBuffer[j];
+                if (moveIndex.row < 0) continue;
+                p.UpdateIndex(moveIndex);
+                p.FlipTiles();
             }
             // 충돌타일 설정 초기화
             for (int r = 0; r < boardRow; r++)
@@ -580,14 +607,14 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if (moveIndex.row < 0) continue;
                 if (p.photonView.IsMine)
                 {
-                    board[moveIndex.row, moveIndex.col].Flip(1);
+                    board[moveIndex.row, moveIndex.col].ChangeColor(1);
                 }
                 else
                 {
-                    board[moveIndex.row, moveIndex.col].Flip(2);
+                    board[moveIndex.row, moveIndex.col].ChangeColor(2);
                 }
             }
-            yield return new WaitForSeconds(1f); //한칸 이동
+            yield return new WaitForSeconds(1); //한칸 이동
             
             // ---서로 겹치는지 확인 && 겹치면 장애물 설치한 player가 짐
             //if(players[0].currentIndex.Equals(players[1].currentIndex))
@@ -660,6 +687,13 @@ public class GameManager : MonoBehaviourPunCallbacks
             state = BattleState.Input;
         }
         isProcessing = false;
+    }
+
+    public Vector3 GetLookPos(Tile tile)
+    {
+        Vector3 lookPos = tile.transform.position;
+        lookPos.y = 0;
+        return lookPos;
     }
 
     private void SetCrashTile(Index moveIndex1, Index moveIndex2)

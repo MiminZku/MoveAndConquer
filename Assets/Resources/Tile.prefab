@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 272525496576166170}
   - component: {fileID: 9173203178857874959}
   - component: {fileID: 5613022052922613604}
+  - component: {fileID: 5341999410422909319}
   m_Layer: 0
   m_Name: Tile
   m_TagString: Untagged
@@ -110,9 +111,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b3b14f5041b9c144b7ebdf915135527, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isObstacleSet: 0
   materials:
   - {fileID: 2100000, guid: 2c8919da3ef42f4489431ba0a5e4f0eb, type: 2}
   - {fileID: 2100000, guid: 9098720aea4cc124a857234a57166a08, type: 2}
   - {fileID: 2100000, guid: b914caec45d70744cb528c3aac9e8a6c, type: 2}
   - {fileID: 2100000, guid: f8dc5dc6d43d9c44ea84c144ca32478b, type: 2}
   color: 0
+  tileAnimator: {fileID: 5341999410422909319}
+--- !u!95 &5341999410422909319
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7780340485939448085}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e3469e47d06809042870219bcbb7dd2f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0

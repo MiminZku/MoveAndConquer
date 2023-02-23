@@ -29,7 +29,7 @@ public class Tile : MonoBehaviour
     //
     public Index tileIndex;
     internal bool isCrash;
-
+    [SerializeField] Animator tileAnimator;
     // Start is called before the first frame update 
     void Start()
     {
@@ -45,9 +45,9 @@ public class Tile : MonoBehaviour
     public void Flip(int mode)
     {
         // 충돌 일어나는 tile 이면 색칠 패스
-         if(isCrash) { return; }
+        if(isCrash) { return; }
         if (isObstacleSet) return;
-
+        tileAnimator.SetTrigger("Flip");
         ChangeColor(mode);
     }
 

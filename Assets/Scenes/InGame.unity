@@ -3250,7 +3250,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &762286187
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4415,7 +4415,7 @@ MonoBehaviour:
   spawnPositions:
   - {fileID: 1168355400}
   - {fileID: 1147643928}
-  playerPrefab: {fileID: 5007558601542243069, guid: 484589ae8518845498ac57c16e0582e0, type: 3}
+  playerPrefab: {fileID: 6980789349552132774, guid: f8c90c065adfb6d4e8dd25fcc7b7e537, type: 3}
   currentTime: 0
   maxTime: 30
   timeText: {fileID: 1423059496}

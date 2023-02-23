@@ -690,6 +690,7 @@ GameObject:
   - component: {fileID: 3511842029809918089}
   - component: {fileID: 4465713238800352213}
   - component: {fileID: 1455309854346125345}
+  - component: {fileID: 266472807}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -705,7 +706,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5007558601542243069}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.3, y: 0, z: 2.9}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -815,7 +816,31 @@ MonoBehaviour:
   previousColors: 
   player1Mat: {fileID: 2100000, guid: 3060d33e27fb5964f8434fec1b3de78d, type: 2}
   player2Mat: {fileID: 2100000, guid: 07f0c894af2d55c4a9e13106c1752cb3, type: 2}
+  previousTarget: {fileID: 0}
+  currentTarget: {fileID: 0}
+  previousColor: 0
   isObstacleInput: 0
+  playerAnimator: {fileID: 266472807}
+--- !u!95 &266472807
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5007558601542243069}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b2dc417bdace3e9479e6566ef48e8540, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &7918344429480307778
 GameObject:
   m_ObjectHideFlags: 0

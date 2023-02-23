@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Windows;
@@ -29,9 +30,9 @@ public class Player : MonoBehaviourPun
     public Material player1Mat;
     public Material player2Mat;
 
-    Tile previousTarget;
-    Tile currentTarget;
-    TileColor previousColor;
+    public Tile previousTarget;
+    public Tile currentTarget;
+    public TileColor previousColor;
 
     public bool isObstacleInput; // 입력 가능 flag
     private bool isMoveInput;
@@ -46,8 +47,12 @@ public class Player : MonoBehaviourPun
     Button resetButton;
     Button confirmButton;
 
+    public Animator playerAnimator;
+    public Transform parentTransform;
+
     void Start()
     {
+        //parentTransform = transform.GetParentComponent<Transform>();
         resetButton = GameManager.Instance.inputButtons.transform.GetChild(0).GetComponent<Button>();
         confirmButton = GameManager.Instance.inputButtons.transform.GetChild(1).GetComponent<Button>();
         isMoveInput = false;
@@ -64,7 +69,7 @@ public class Player : MonoBehaviourPun
             meshRenderer.material = player2Mat;
         }
 
-        if (transform.position == GameManager.Instance.spawnPositions[0].position)
+        if (parentTransform.position == GameManager.Instance.spawnPositions[0].position)
         {
             photonView.RPC("SetIndex", RpcTarget.AllBuffered, 6, 2);
         }
@@ -73,7 +78,7 @@ public class Player : MonoBehaviourPun
             photonView.RPC("SetIndex", RpcTarget.AllBuffered, 2, 2);
         }
         orgIndex = currentIndex;
-        orgPosition = transform.position;
+        orgPosition = parentTransform.position;
     }
     [PunRPC]
     void SetIndex(int row, int col)
@@ -157,7 +162,7 @@ public class Player : MonoBehaviourPun
                             currentIndex.row += 1;
                             return;
                         }
-                        gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
+                        parentTransform.Translate(new Vector3(0, 0, 1.25f));
                         input = true;
                     }
 
@@ -177,7 +182,7 @@ public class Player : MonoBehaviourPun
                             currentIndex.col += 1;
                             return;
                         }
-                        gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
+                        parentTransform.Translate(new Vector3(-1.25f, 0, 0));
                         input = true;
                     }
 
@@ -197,7 +202,7 @@ public class Player : MonoBehaviourPun
                             currentIndex.row -= 1;
                             return;
                         }
-                        gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
+                        parentTransform.Translate(new Vector3(0, 0, -1.25f));
                         input = true;
                     }
 
@@ -217,7 +222,7 @@ public class Player : MonoBehaviourPun
                             currentIndex.col -= 1;
                             return;
                         }
-                        gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
+                        parentTransform.Translate(new Vector3(1.25f, 0, 0));
                         input = true;
                     }
                 }
@@ -280,7 +285,8 @@ public class Player : MonoBehaviourPun
         isMoveInput = true;
         moveCount = 0;
         orgIndex = currentIndex;
-        orgPosition = transform.position;
+        orgPosition = parentTransform.position;
+        parentTransform.rotation = Quaternion.Euler(0, 0, 0);
         // flag 를 이 함수에서 바꿔주고 Update() 에서 입력을 받기
         // flag는 입력을 받을 수 잇는 상태를 나타냄
         // 이동 입력받기는 InputObstacle() 함수와 마찬가지로 Update() 문에서 받기
@@ -340,28 +346,86 @@ public class Player : MonoBehaviourPun
     // 이동 함수
     public void Move(Index moveIndex)
     {
+        // 이동 애니메이션 재생
+        //Vector3 lookPos = GameManager.Instance.GetLookPos(board[moveIndex.row, moveIndex.col]) - parentTransform.position;
+        //parentTransform.rotation = Quaternion.LookRotation(lookPos);
+        parentTransform.LookAt(GameManager.Instance.GetLookPos(board[moveIndex.row,moveIndex.col]));
+        playerAnimator.SetTrigger("Move");
+        //currentIndex = moveIndex;
+        //orgIndex = currentIndex;
+        //Vector3 curPos = board[currentIndex.row,currentIndex.col].transform.position;
+        //curPos.y = 0;
+        //parentTransform.position = curPos;
+        //transform.localPosition = Vector3.zero;
 
-        currentIndex = moveIndex;
+        //Tile moveTile = board[currentIndex.row, currentIndex.col];
+        //float moveX = moveTile.transform.position.x;
+        //float moveZ = moveTile.transform.position.z;
+        //transform.position = new Vector3(moveX, transform.position.y, moveZ);
 
-        Tile moveTile = board[currentIndex.row, currentIndex.col];
-        float moveX = moveTile.transform.position.x;
-        float moveZ = moveTile.transform.position.z;
-        transform.position = new Vector3(moveX, transform.position.y, moveZ);
-        orgIndex = currentIndex;
         // 움직이면서 타일 뒤집기 
         // flag를 통해서 tile 뒤집기 tag를 통해서 색깔 지정
         // tag로 player 지정
+
+        //int mode;
+        //if(photonView.IsMine) { mode = 1; } // Blue 색 
+        //else { mode = 2; } //Red 색
+        //// check flag
+        //SetPathFlag();
+        //// change color
+        //board[currentIndex.row , currentIndex.col].Flip(mode);
+        //if(isMoveUp)
+        //{
+        //    board[currentIndex.row - 1 , currentIndex.col].Flip(mode);
+        //}
+        //if(isMoveDown)
+        //{
+        //    board[currentIndex.row + 1 , currentIndex.col].Flip(mode);
+        //}
+        //if(isMoveRight)
+        //{
+        //    board[currentIndex.row , currentIndex.col + 1].Flip(mode);
+        //}
+        //if(isMoveLeft)
+        //{
+        //    board[currentIndex.row , currentIndex.col - 1].Flip(mode);
+        //}
+    }
+    public void UpdateIndex(Index moveIndex)
+    {
+        playerAnimator.SetTrigger("Exit");
+        currentIndex = moveIndex;
+        orgIndex = currentIndex;
+        Vector3 curPos = board[currentIndex.row, currentIndex.col].transform.position;
+        curPos.y = 0;
+        parentTransform.position = curPos;
+        transform.localPosition = Vector3.zero;
+    }
+    public void FlipTiles()
+    {
         int mode;
-        if(photonView.IsMine) { mode = 1; } // Blue 색 
+        if (photonView.IsMine) { mode = 1; } // Blue 색 
         else { mode = 2; } //Red 색
         // check flag
-        SetPathFlag();
-        // change color
-        board[currentIndex.row , currentIndex.col].Flip(mode);
-        if(isMoveUp) { board[currentIndex.row - 1 , currentIndex.col].Flip(mode); }
-        if(isMoveDown) { board[currentIndex.row + 1 , currentIndex.col].Flip(mode); }
-        if(isMoveRight) { board[currentIndex.row , currentIndex.col + 1].Flip(mode); }
-        if(isMoveLeft) { board[currentIndex.row , currentIndex.col - 1].Flip(mode); }
+        //SetPathFlag();
+        // Flip
+        //board[currentIndex.row, currentIndex.col].Flip(mode);
+        if (currentIndex.row != 0)
+        {
+            board[currentIndex.row - 1, currentIndex.col].Flip(mode);
+        }
+        if (currentIndex.row != GameManager.Instance.boardRow - 1)
+        {
+            board[currentIndex.row + 1, currentIndex.col].Flip(mode);
+        }
+        if (currentIndex.col != GameManager.Instance.boardCol - 1)
+        {
+            board[currentIndex.row, currentIndex.col + 1].Flip(mode);
+        }
+        if (currentIndex.col != 0)
+        {
+            board[currentIndex.row, currentIndex.col - 1].Flip(mode);
+        }
     }
 
 
@@ -376,7 +440,7 @@ public class Player : MonoBehaviourPun
         if (photonView.IsMine && isMoveInput)
         {
             currentIndex = orgIndex;
-            transform.position = orgPosition;
+            parentTransform.position = orgPosition;
         }
             int dN = GameManager.Instance.diceNum;
         if (pathBuffer.Count < dN)
@@ -393,7 +457,7 @@ public class Player : MonoBehaviourPun
         isObstacleInput = false;
         if(currentTarget != null)
         {
-            currentTarget.ChangeColor((int)previousColor);
+            //currentTarget.ChangeColor((int)previousColor);
             currentTarget.isObstacleInput = true;
             photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, currentTarget.tileIndex.row, currentTarget.tileIndex.col);
         }
@@ -425,12 +489,13 @@ public class Player : MonoBehaviourPun
         }
         else if(isMoveInput)
         {
+            transform.GetChild(0).gameObject.SetActive(true);
             RestoreTileColor();
             photonView.RPC("ClearPathBufferRPC",RpcTarget.AllBuffered);
             previousColors.Clear();
             moveCount = 0;
             currentIndex = orgIndex;
-            transform.position = orgPosition;
+            parentTransform.position = orgPosition;
         }
         resetButton.interactable = false;
         confirmButton.interactable = false;
@@ -446,7 +511,7 @@ public class Player : MonoBehaviourPun
         if (!photonView.IsMine) return;
         if (isObstacleInput)
         {
-            currentTarget.ChangeColor((int)previousColor);
+            //currentTarget.ChangeColor((int)previousColor);
             isObstacleInput = false;
             currentTarget.isObstacleInput = true;
             photonView.RPC("SetObstacleFlag", RpcTarget.AllBuffered, currentTarget.tileIndex.row, currentTarget.tileIndex.col);
@@ -459,7 +524,7 @@ public class Player : MonoBehaviourPun
         {
             transform.GetChild(0).gameObject.SetActive(false);
             currentIndex = orgIndex;
-            transform.position = orgPosition;
+            parentTransform.position = orgPosition;
             isMoveInput = false;
         }
         // network
@@ -469,6 +534,7 @@ public class Player : MonoBehaviourPun
 
     public void MoveInput(int buttonIndex)
     {
+        if(moveCount == GameManager.Instance.diceNum) { return; }
         switch(buttonIndex)
         {
             case 0:
@@ -485,7 +551,7 @@ public class Player : MonoBehaviourPun
                         currentIndex.row += 1;
                         return;
                     }
-                    gameObject.transform.Translate(new Vector3(0, 0, 1.25f));
+                    parentTransform.Translate(new Vector3(0, 0, 1.25f));
                 }
                 break;
             case 1:
@@ -502,7 +568,7 @@ public class Player : MonoBehaviourPun
                         currentIndex.col += 1;
                         return;
                     }
-                    gameObject.transform.Translate(new Vector3(-1.25f, 0, 0));
+                    parentTransform.Translate(new Vector3(-1.25f, 0, 0));
                 }
                     break;
             case 2:
@@ -519,7 +585,7 @@ public class Player : MonoBehaviourPun
                         currentIndex.row -= 1;
                         return;
                     }
-                    gameObject.transform.Translate(new Vector3(0, 0, -1.25f));
+                    parentTransform.Translate(new Vector3(0, 0, -1.25f));
                 }
                 break;
             case 3:
@@ -536,7 +602,7 @@ public class Player : MonoBehaviourPun
                         currentIndex.col -= 1;
                         return;
                     }
-                    gameObject.transform.Translate(new Vector3(1.25f, 0, 0));
+                    parentTransform.Translate(new Vector3(1.25f, 0, 0));
                 }
                 break;
         }
@@ -545,6 +611,10 @@ public class Player : MonoBehaviourPun
         moveCount++;
         resetButton.interactable = true;
         photonView.RPC("AddPathRPC", RpcTarget.AllBuffered, currentIndex.row, currentIndex.col);
+        if (moveCount == GameManager.Instance.diceNum)
+        {
+            transform.GetChild(0).gameObject.SetActive(false);
+        }
     }
 }
 
