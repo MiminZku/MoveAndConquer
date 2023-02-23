@@ -45,9 +45,13 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject playerTagBottom_Other; 
     [SerializeField] GameObject playerTagUp_I; 
     [SerializeField] GameObject playerTagUp_Other; 
+    [SerializeField] Text obstacleNumText; 
 
 
-
+    public void UpdateObstacleNum(int n)
+    {
+        obstacleNumText.text = "(" + n + "번 남음)";
+    }
 
     public void ShowWaitBar()
     {

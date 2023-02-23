@@ -62,6 +62,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isBtnSelected;
     // 말이 잡혀서 게임이 종료되는 경우 사용
     bool isGameOver = false;
+    int obstacleMaxNum = 3;
 
     // Time 체크 변수 
     [HideInInspector] public float currentTime = 0;
@@ -74,6 +75,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject obstaclePrefab;
     [SerializeField] GameObject inputObstacleButton;
     [SerializeField] GameObject inputMoveButton;
+    [SerializeField] Button obstacleButton;
     public GameObject inputButtons;
     [SerializeField] Text diceText;
     [SerializeField] Text turnText;
@@ -322,6 +324,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         inputButtons.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
+        // 최대 장애물 설치 횟수 줄이기 -> 이건 rpc 필요 없음 각 플레이어마다 다르니까
+        if(obstacleMaxNum > 0) uiMgr.UpdateObstacleNum(--obstacleMaxNum);
+        if(obstacleMaxNum <= 0) obstacleButton.interactable = false;
+
     }
 
     public void OnClickMoveBtn()
