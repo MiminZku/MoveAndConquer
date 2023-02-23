@@ -32,6 +32,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject catchWinText;
     [SerializeField] GameObject catchLoseText;
 
+    [SerializeField] GameObject startToast;
     [SerializeField] GameObject diceToast;
     [SerializeField] Text diceToastText;
     [SerializeField] GameObject turnToast;
@@ -39,7 +40,11 @@ public class UIManager : MonoBehaviour
     [SerializeField] GameObject moveHelperToast;
     [SerializeField] GameObject obstacleHelperToast;
     [SerializeField] GameObject choiceHelperToast;
-
+    [SerializeField] GameObject setObstacleHelperToast;
+    [SerializeField] GameObject playerTagBottom_I;
+    [SerializeField] GameObject playerTagBottom_Other; 
+    [SerializeField] GameObject playerTagUp_I; 
+    [SerializeField] GameObject playerTagUp_Other; 
 
 
 
@@ -120,6 +125,14 @@ public class UIManager : MonoBehaviour
     {
         turnToastText.text = "Turn " + n;
     }
+    public void ShowStartToast()
+    {
+        startToast.SetActive(true);
+    }
+    public void HideStartToast()
+    {
+        startToast.SetActive(false);
+    }
     public IEnumerator BlinkMoveHelperToast()
     {
         moveHelperToast.SetActive(true);
@@ -138,6 +151,34 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(3f);
         choiceHelperToast.SetActive(false);
     }
+    public IEnumerator BlinkSetObstacleHelperToast()
+    {
+        Debug.Log("Set Obstacle");
+        setObstacleHelperToast.SetActive(true);
+        yield return new WaitForSeconds(2f);
+        setObstacleHelperToast.SetActive(false);
+    }
+
+    public IEnumerator BlinkMyPlayerIsUp()
+    {
+        Debug.Log("My Player is Up");
+        playerTagUp_I.SetActive(true);
+        playerTagBottom_Other.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        playerTagUp_I.SetActive(false);
+        playerTagBottom_Other.SetActive(false);
+    }
+    public IEnumerator BlinkMyPlayerIsBottm()
+    {
+        Debug.Log("My Player is bottom");
+        playerTagBottom_I.SetActive(true);
+        playerTagUp_Other.SetActive(true);
+        yield return new WaitForSeconds(5f);
+        playerTagBottom_I.SetActive(false);
+        playerTagUp_Other.SetActive(false);
+    }
+
+    // --일단 사용 안함
     public void ShowMoveHelperToast()
     {
         moveHelperToast.SetActive(true);
@@ -162,7 +203,7 @@ public class UIManager : MonoBehaviour
     {
         choiceHelperToast.SetActive(false);
     }
-
+    // --
 
 
     // 버튼 onclicklistener 만들기

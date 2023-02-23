@@ -179,7 +179,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         switch (state)
         {
             case BattleState.Start:
-                state = BattleState.Input;
+                if (isProcessing) return;
+                else isProcessing = true;
+                StartCoroutine(GameStart());
                 break;
             case BattleState.Input:
                 if (isProcessing) return;
@@ -337,9 +339,34 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
 
+
     // coroutine
+    IEnumerator GameStart()
+    {
+        yield return new WaitForSeconds(2f);
+        // GamStartUi
+        uiMgr.ShowStartToast();
+        yield return new WaitForSeconds(2f);
+        uiMgr.HideStartToast();
+
+        // Player 표시 -> 원래 여기 들어가는 코드는 아닌듯 localPlayerIndex
+        var localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        if(localPlayerIndex == 0)
+        {
+            StartCoroutine(uiMgr.BlinkMyPlayerIsBottm());
+        }
+        else
+        {
+            StartCoroutine(uiMgr.BlinkMyPlayerIsUp());
+        }
+
+        state = BattleState.Input;
+        isProcessing = false;
+    }
     IEnumerator InputProcess()
     {
+        
+
         // 현재 턴 잠깐 표시
         yield return new WaitForSeconds(2f);
         uiMgr.UpdateTurnToastText(currentTurn);
@@ -459,6 +486,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
 
+        StartCoroutine(uiMgr.BlinkSetObstacleHelperToast());
         // 2초 대기
         yield return new WaitForSeconds(2f);
         state = BattleState.Move;
