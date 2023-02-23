@@ -36,6 +36,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] Text diceToastText;
     [SerializeField] GameObject turnToast;
     [SerializeField] Text turnToastText;
+    [SerializeField] GameObject moveHelperToast;
+    [SerializeField] GameObject obstacleHelperToast;
+    [SerializeField] GameObject choiceHelperToast;
+
 
 
 
@@ -116,6 +120,49 @@ public class UIManager : MonoBehaviour
     {
         turnToastText.text = "Turn " + n;
     }
+    public IEnumerator BlinkMoveHelperToast()
+    {
+        moveHelperToast.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        moveHelperToast.SetActive(false);
+    }
+    public IEnumerator BlinkObstacleHelperToast()
+    {
+        obstacleHelperToast.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        obstacleHelperToast.SetActive(false);
+    }
+    public IEnumerator BlinkChoiceHelperToast()
+    {
+        choiceHelperToast.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        choiceHelperToast.SetActive(false);
+    }
+    public void ShowMoveHelperToast()
+    {
+        moveHelperToast.SetActive(true);
+    }
+    public void HideMoveHelperToast()
+    {
+        moveHelperToast.SetActive(false);
+    }
+    public void ShowObstacleHelperToast()
+    {
+        obstacleHelperToast.SetActive(true);
+    }
+    public void HideObstacleHelperToast()
+    {
+        obstacleHelperToast.SetActive(false);
+    }
+    public void ShowChoiceHelperToast()
+    {
+        choiceHelperToast.SetActive(true);
+    }
+    public void HideChoiceHelperToast()
+    {
+        choiceHelperToast.SetActive(false);
+    }
+
 
 
     // 버튼 onclicklistener 만들기

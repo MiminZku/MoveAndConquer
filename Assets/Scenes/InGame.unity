@@ -4001,6 +4001,9 @@ MonoBehaviour:
   diceToastText: {fileID: 1189718883}
   turnToast: {fileID: 522325605}
   turnToastText: {fileID: 244862395}
+  moveHelperToast: {fileID: 92060980}
+  obstacleHelperToast: {fileID: 1668040644}
+  choiceHelperToast: {fileID: 400993514}
 --- !u!1 &1147643927
 GameObject:
   m_ObjectHideFlags: 0

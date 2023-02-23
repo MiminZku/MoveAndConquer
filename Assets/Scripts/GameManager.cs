@@ -309,6 +309,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void OnClickObstacleBtn()
     {
         Debug.Log("OnClickObstacleBtn");
+        StartCoroutine(uiMgr.BlinkObstacleHelperToast());
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
@@ -323,6 +324,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void OnClickMoveBtn()
     {
         Debug.Log("OnClickMoveBtn");
+        StartCoroutine(uiMgr.BlinkMoveHelperToast());
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
@@ -367,6 +369,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         // *장애물, 이동 선택 UI 표시
         yield return new WaitForSeconds(1f);
         ShowSelectUI();
+        StartCoroutine(uiMgr.BlinkChoiceHelperToast());
 
         // *시간 제한 함수(시간 count)
         // 시간 재거나 필요한 변수들 초기화
