@@ -6,6 +6,7 @@ using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting;
 
 public enum BattleState
 {
@@ -61,11 +62,12 @@ public class GameManager : MonoBehaviourPunCallbacks
     bool isBtnSelected;
     // 말이 잡혀서 게임이 종료되는 경우 사용
     bool isGameOver = false;
+    int obstacleMaxNum = 3;
 
     // Time 체크 변수 
     [HideInInspector] public float currentTime = 0;
     float startTime = 0;
-    [HideInInspector] float maxTime = 15f;
+    [SerializeField] float maxTime;
     bool isTimeCheck = false;
     [SerializeField] GameObject timeText;
 
@@ -73,6 +75,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] GameObject obstaclePrefab;
     [SerializeField] GameObject inputObstacleButton;
     [SerializeField] GameObject inputMoveButton;
+    [SerializeField] Button obstacleButton;
     public GameObject inputButtons;
     [SerializeField] Text diceText;
     [SerializeField] Text turnText;
@@ -110,7 +113,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         var localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
         var spawnPosition = spawnPositions[localPlayerIndex % spawnPositions.Length];
         myPlayerObject = PhotonNetwork.Instantiate(playerPrefab.name, spawnPosition.position, spawnPosition.rotation);
-        myPlayer = myPlayerObject.GetComponent<Player>();
+        myPlayer = myPlayerObject.transform.GetChild(0).GetComponent<Player>();
     }
 
     void Update()
@@ -179,7 +182,9 @@ public class GameManager : MonoBehaviourPunCallbacks
         switch (state)
         {
             case BattleState.Start:
-                state = BattleState.Input;
+                if (isProcessing) return;
+                else isProcessing = true;
+                StartCoroutine(GameStart());
                 break;
             case BattleState.Input:
                 if (isProcessing) return;
@@ -309,6 +314,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     public void OnClickObstacleBtn()
     {
         Debug.Log("OnClickObstacleBtn");
+        StartCoroutine(uiMgr.BlinkObstacleHelperToast());
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
@@ -318,11 +324,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         inputButtons.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
+        // 최대 장애물 설치 횟수 줄이기 -> 이건 rpc 필요 없음 각 플레이어마다 다르니까
+        if(obstacleMaxNum > 0) uiMgr.UpdateObstacleNum(--obstacleMaxNum);
+        if(obstacleMaxNum <= 0) obstacleButton.interactable = false;
+
     }
 
     public void OnClickMoveBtn()
     {
         Debug.Log("OnClickMoveBtn");
+        StartCoroutine(uiMgr.BlinkMoveHelperToast());
         // *버튼 클릭 flag (isBtnSelected) 참으로 설정.
         // *Btn UI 비활성화
         isBtnSelected = true;
@@ -330,28 +341,70 @@ public class GameManager : MonoBehaviourPunCallbacks
         inputObstacleButton.SetActive(false);
         inputMoveButton.SetActive(false);
         inputButtons.SetActive(true);
+        myPlayer.transform.GetChild(0).gameObject.SetActive(true);
         Debug.Log("isBtnSelected : " + isBtnSelected);
         Debug.Log("isObstacleSelected : " + isObstacleSelected);
     }
 
+
     // coroutine
+    IEnumerator GameStart()
+    {
+        yield return new WaitForSeconds(2f);
+        // GamStartUi
+        uiMgr.ShowStartToast();
+        yield return new WaitForSeconds(2f);
+        uiMgr.HideStartToast();
+
+        // Player 표시 -> 원래 여기 들어가는 코드는 아닌듯 localPlayerIndex
+        var localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
+        if(localPlayerIndex == 0)
+        {
+            StartCoroutine(uiMgr.BlinkMyPlayerIsBottm());
+        }
+        else
+        {
+            StartCoroutine(uiMgr.BlinkMyPlayerIsUp());
+        }
+
+        state = BattleState.Input;
+        isProcessing = false;
+    }
     IEnumerator InputProcess()
     {
+        
+
+        // 현재 턴 잠깐 표시
+        yield return new WaitForSeconds(2f);
+        uiMgr.UpdateTurnToastText(currentTurn);
+        uiMgr.ShowTurnToast();
+        yield return new WaitForSeconds(1.5f);
+        uiMgr.HideTurnToast();
+        
+
         ChangeTurnUI();
         // 주사위 굴리기 -> master client만 호출
         RollingDice();  // delay 주기
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
         // 주사위 동기화
         SyscDiceNum();
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
-        // *주사위 눈 수 UI에 표시
+        // 주사위 눈 수 UI에 표시
         ChangeDiceUI();
+        // 주사위 toast 띄우기
+        uiMgr.UpdateDiceToastText(diceNum);
+        uiMgr.ShowDiceToast();
+        yield return new WaitForSeconds(1.5f);
+        uiMgr.HideDiceToast();
 
         // UI로 장애물 놓을건지 이동할건지 입력 받음
         // *장애물, 이동 선택 UI 표시
+        yield return new WaitForSeconds(1f);
         ShowSelectUI();
+        StartCoroutine(uiMgr.BlinkChoiceHelperToast());
+        //myPlayer.parentTransform.rotation = Quaternion.Euler(0, 0, 0);
 
         // *시간 제한 함수(시간 count)
         // 시간 재거나 필요한 변수들 초기화
@@ -411,7 +464,10 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         state = BattleState.SetObstacle;
         isProcessing = false;
+        inputButtons.transform.GetChild(0).GetComponent<Button>().interactable = false;
+        inputButtons.transform.GetChild(1).GetComponent<Button>().interactable = false;
         inputButtons.SetActive(false);
+        myPlayer.transform.GetChild(0).gameObject.SetActive(false);
     }
 
     private void ChangeTurnUI()
@@ -422,7 +478,11 @@ public class GameManager : MonoBehaviourPunCallbacks
     // *board를 뒤져서 obstacle 설치
     IEnumerator SetObstacle()
     {
-        Debug.Log("SetObstacle");
+        if (myPlayer.currentTarget != null)
+        {
+            myPlayer.currentTarget.ChangeColor((int)myPlayer.previousColor);
+        }
+            Debug.Log("SetObstacle");
         // *isObstacle flag가 새워져 있는 tile들을 찾고 그 tile들의 tileIndex 가져오기
         // tile의 index를 통해 장애물 설치
         // 장애물을 prefab으로 받아서 tile의 tileIndex을 이용해서 해당 위치에 장애물 spawn
@@ -440,6 +500,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
 
+        StartCoroutine(uiMgr.BlinkSetObstacleHelperToast());
         // 2초 대기
         yield return new WaitForSeconds(2f);
         state = BattleState.Move;
@@ -449,6 +510,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     // **모든 플레이어 이동하면서 타일 색칠 
     IEnumerator AllMove()
     {
+
         Debug.Log("AllMove");
         // *myPlayer 멤버 변수를 이용해서 이동 + 색칠
         // 이동 + 색칠은 RPC 함수 안에서 구현해야할듯
@@ -466,8 +528,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         Debug.Log("Player 0 : " + players[0].pathBuffer.Count);
         Debug.Log("Player 1 : " + players[1].pathBuffer.Count);
         Debug.Log("MyPlayer : " + myPlayer.pathBuffer.Count);
-        //int bigger = players[0].pathBuffer.Count > players[1].pathBuffer.Count ?
-        //                players[0].pathBuffer.Count : players[1].pathBuffer.Count;
         for (int j = 0; j < diceNum; j++)
         {
             Index moveIndex;
@@ -482,11 +542,17 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if(moveIndex1.Equals(moveIndex2))
                 {
                     // 충돌 애니매이션 재생
+                    foreach (Player p in players)
+                    {
+                        p.parentTransform.LookAt(GetLookPos(board[moveIndex1.row, moveIndex1.col]));
+                        p.playerAnimator.SetTrigger("Crash");
+                    }
                     Debug.Log("충돌 모든 이동 중지");
+                    yield return new WaitForSeconds(1);
                     break;
                 }
 
-                //// 충돌 확인
+                //// 타일 충돌 확인
                 if (moveIndex1.row >= 0 && moveIndex2.row >= 0)
                 {
                     // 충돌 타일은 기존 색 그대로 
@@ -506,15 +572,29 @@ public class GameManager : MonoBehaviourPunCallbacks
                 // 이동할 index의 타일이 장애물 타일이면 그 뒤에 경로도 없애고 pass
                 if (board[moveIndex.row, moveIndex.col].isObstacleInput)
                 {
-                    //p.pathBuffer.Clear();
-                    for(int k = j; k < diceNum; k++)
+                    // 충돌 애니매이션 재생
+                    p.parentTransform.LookAt(GetLookPos(board[moveIndex.row, moveIndex.col]));
+                    p.playerAnimator.SetTrigger("Crash");
+                    Debug.Log("장애물 충돌 모든 이동 중지");
+                    // 뒤의 경로 삭제
+                    for (int k = j; k < diceNum; k++)
                     {
                         p.pathBuffer[k] = new Index(-1, -1);
                     }
                     continue;
                 }
                 // 이동하면서 타일 색칠
+                //p.parentTransform.rotation = Quaternion.Euler(0, 90, 0);
+                //yield return null;
                 p.Move(moveIndex);
+            }
+            yield return new WaitForSeconds(0.66f);
+            foreach(Player p in players)
+            {
+                moveIndex = p.pathBuffer[j];
+                if (moveIndex.row < 0) continue;
+                p.UpdateIndex(moveIndex);
+                p.FlipTiles();
             }
             // 충돌타일 설정 초기화
             for (int r = 0; r < boardRow; r++)
@@ -533,14 +613,14 @@ public class GameManager : MonoBehaviourPunCallbacks
                 if (moveIndex.row < 0) continue;
                 if (p.photonView.IsMine)
                 {
-                    board[moveIndex.row, moveIndex.col].Flip(1);
+                    board[moveIndex.row, moveIndex.col].ChangeColor(1);
                 }
                 else
                 {
-                    board[moveIndex.row, moveIndex.col].Flip(2);
+                    board[moveIndex.row, moveIndex.col].ChangeColor(2);
                 }
             }
-            yield return new WaitForSeconds(1f); //한칸 이동
+            yield return new WaitForSeconds(1); //한칸 이동
             
             // ---서로 겹치는지 확인 && 겹치면 장애물 설치한 player가 짐
             //if(players[0].currentIndex.Equals(players[1].currentIndex))
@@ -581,7 +661,7 @@ public class GameManager : MonoBehaviourPunCallbacks
                         {
                             Debug.Log("내가 잡아 먹음");
                         }
-                        Destroy(players[i].gameObject);
+                        // players[i].gameObject.SetActive(false);
                         isGameOver = true;
                         players[i].isGameLose = true;
                         state = BattleState.Finish;
@@ -613,6 +693,13 @@ public class GameManager : MonoBehaviourPunCallbacks
             state = BattleState.Input;
         }
         isProcessing = false;
+    }
+
+    public Vector3 GetLookPos(Tile tile)
+    {
+        Vector3 lookPos = tile.transform.position;
+        lookPos.y = 0;
+        return lookPos;
     }
 
     private void SetCrashTile(Index moveIndex1, Index moveIndex2)
@@ -652,13 +739,18 @@ public class GameManager : MonoBehaviourPunCallbacks
                     if(p.photonView.IsMine)
                     {
                         Debug.Log("내가 짐");
+                        uiMgr.ShowCatchEndWindow();
+                        uiMgr.ShowCatchLoseText();
                     }
+                        p.gameObject.SetActive(false);
                 }
                 else
                 {
                     if(p.photonView.IsMine)
                     {
                         Debug.Log("내가 이김");
+                        uiMgr.ShowCatchEndWindow();
+                        uiMgr.ShowCatchWinText();
                     }
                 }
             

@@ -17,6 +17,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     [SerializeField] Button createRoomButton;
     [SerializeField] Button joinRandomRoomButton;
     [SerializeField] Button goToMainButton;
+    [SerializeField] Button playButton;
+    [SerializeField] GameObject startScreen;
+    [SerializeField] GameObject ruleScreen;
 
     List<RoomInfo> myList = new List<RoomInfo>();
     int currentPage = 1, maxPage, multiple;
@@ -24,11 +27,16 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     // Start is called before the first frame update
     void Start()
     {
+        if(PhotonNetwork.IsConnected)
+        {
+            startScreen.SetActive(false);
+        }
         PhotonNetwork.GameVersion = gameVersion;
         PhotonNetwork.ConnectUsingSettings();
 
         joinRandomRoomButton.interactable = false;
         createRoomButton.interactable = false;
+        playButton.interactable = false;
         connectionInfoText.text = "Connecting to master server...";
     }
 
@@ -36,6 +44,7 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         joinRandomRoomButton.interactable = true;
         createRoomButton.interactable = true;
+        playButton.interactable = true;
         connectionInfoText.text = "Online : Connected to master server";
         PhotonNetwork.JoinLobby();
     }
@@ -125,5 +134,26 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         PhotonNetwork.CreateRoom(roomName.text == "" ? 
             Random.Range(1000, 9999).ToString() : roomName.text,
             new RoomOptions { MaxPlayers = 2 });
+    }
+
+    public void OnClickGoToMainButton()
+    {
+        startScreen.SetActive(true);
+    }
+
+    public void OnClickGameRuleButton()
+    {
+        startScreen.SetActive(false);
+        ruleScreen.SetActive(true);
+    }
+
+    public void OnClickPlayButton()
+    {
+        startScreen.SetActive(false);
+    }
+
+    public void OnClickRulePlayBtn()
+    {
+        ruleScreen.SetActive(false);
     }
 }
