@@ -100,7 +100,7 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
         // player 생성
-        SpanwPlayer();
+        SpawnPlayer();
         // 상태 초기화
         state = BattleState.Start;
         timeText.GetComponent<Text>().text = "" + maxTime;
@@ -108,7 +108,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         uiMgr = UIManager.Instance;
     }
 
-    private void SpanwPlayer()
+    private void SpawnPlayer()
     {
         var localPlayerIndex = PhotonNetwork.LocalPlayer.ActorNumber - 1;
         var spawnPosition = spawnPositions[localPlayerIndex % spawnPositions.Length];
@@ -131,7 +131,44 @@ public class GameManager : MonoBehaviourPunCallbacks
             }
         }
         if (isTimeCheck) CheckTime();
+
         GameProcess();
+    }
+    
+    void GameProcess()
+    {
+        if (isProcessing)
+        {
+            return;
+        }
+        isProcessing = true;
+        
+        switch (state)
+        {
+            case BattleState.Start:
+                StartCoroutine(GameStart());
+                break;
+            
+            case BattleState.Input:
+                StartCoroutine(InputProcess());
+                break;
+            
+            // 게임매니저의 타일들을 탐색해서 장애물 플래그가 있는 타일에 장애물 실제로 설치
+            case BattleState.SetObstacle:
+                StartCoroutine(SetObstacle());
+                break;
+            
+            // 이동 입력에 따라서 플레이어에서 이동
+            // 마지막 턴이면 상태 Finish로 변경
+            case BattleState.Move:
+                StartCoroutine(AllMove());
+                break;
+            
+            // 승패 판정
+            case BattleState.Finish:
+                StartCoroutine(Finish());
+                break;
+        }
     }
 
     // 시간 초기화
@@ -143,10 +180,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         currentTime = Time.time - startTime;
         ShowTimeUI();
     }
+    
     // 시간 체크
     void CheckTime()
     {
-        
         // 장애물과 이동 선택 UI 뜨는 순간부터 시간 재기 시작
         currentTime = Time.time - startTime;
 
@@ -172,46 +209,9 @@ public class GameManager : MonoBehaviourPunCallbacks
             isTimeCheck = false;
         }
 
-    // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
-
-}
-
-    private void GameProcess()
-    {
-        if (!isGameStart) isGameStart = true;
-        switch (state)
-        {
-            case BattleState.Start:
-                if (isProcessing) return;
-                else isProcessing = true;
-                StartCoroutine(GameStart());
-                break;
-            case BattleState.Input:
-                if (isProcessing) return;
-                else isProcessing = true;
-                StartCoroutine(InputProcess());
-                break;
-            case BattleState.SetObstacle:
-                // 게임매니저의 타일들을 탐색해서 장애물 플래그가 있는 타일에 장애물 실제로 설치
-                if (isProcessing) return;
-                else isProcessing = true;
-                StartCoroutine(SetObstacle());
-                break;
-            case BattleState.Move:
-                // 이동 입력에 따라서 플레이어에서 이동
-                // 마지막 턴이면 상태 Finish로 변경
-                if (isProcessing) return;
-                else isProcessing = true;
-                StartCoroutine(AllMove());
-                break;
-            case BattleState.Finish:
-                // 승패 판정
-                if (isProcessing) return;
-                else isProcessing = true;
-                StartCoroutine(Finish());
-                break;
-        }
+        // ShowTimeUI, HideTimeUI() 굳이 필요 없을듯
     }
+    
     // 모든 player가 입력을 받았는지 체크
     private bool EveryPlayerReady()
     {
@@ -347,11 +347,13 @@ public class GameManager : MonoBehaviourPunCallbacks
     }
 
 
-    // coroutine
+    // Coroutine
     IEnumerator GameStart()
     {
+        isGameStart = true;
+        
         yield return new WaitForSeconds(2f);
-        // GamStartUi
+        // GamStartUI
         uiMgr.ShowStartToast();
         yield return new WaitForSeconds(2f);
         uiMgr.HideStartToast();
@@ -370,6 +372,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         state = BattleState.Input;
         isProcessing = false;
     }
+    
     IEnumerator InputProcess()
     {
         
@@ -383,7 +386,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         
 
         ChangeTurnUI();
-        // 주사위 굴리기 -> master client만 호출
+        // 주사위 굴리기 -> host 만 호출
         RollingDice();  // delay 주기
         yield return new WaitForSeconds(1f);
 
